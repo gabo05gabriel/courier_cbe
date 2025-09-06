@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles del Envío</title>
+</head>
+<body>
+    <h1>Detalles del Envío</h1>
+    <p><strong>Destinatario:</strong> {{ envio.destinatario_nombre }}</p>
+    <p><strong>Dirección de Origen:</strong> {{ envio.origen_direccion }}</p>
+    <p><strong>Dirección de Destino:</strong> {{ envio.destino_direccion }}</p>
+    <p><strong>Peso:</strong> {{ envio.peso }}</p>
+    <p><strong>Estado:</strong> {{ envio.estado }}</p>
+
+    <!-- Enlace directo a Google Maps con las coordenadas de origen y destino -->
+    <h2>Ubicación de Origen y Destino</h2>
+    <a href="https://www.google.com/maps/dir/?api=1&origin={{ envio.latitud_origen }},{{ envio.longitud_origen }}&destination={{ envio.latitud_destino }},{{ envio.longitud_destino }}" target="_blank">
+        Ver ruta en Google Maps
+    </a>
+
+    <!-- Contenedor del mapa -->
+    <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+    <!-- Enlace para volver a la lista de envíos -->
+    <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
+
+    <!-- Cargar el script de Google Maps API con tu clave de API y luego el archivo mapa.js -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap" async defer></script>
+    <script src="mapa.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Envío</title>
+</head>
+<body>
+    <h1>Editar Envío</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Actualizar Envío</button>
+    </form>
+    <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
+</body>
+</html>
