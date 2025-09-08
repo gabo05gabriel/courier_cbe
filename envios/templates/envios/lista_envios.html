@@ -4,6 +4,99 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Envíos</title>
+    <style>
+        /* Estilos para el navbar */
+        nav {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        nav ul {
+            list-style-type: none;
+            display: flex;
+            justify-content: space-around;
+            padding: 0;
+            margin: 0;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+        }
+
+        nav ul li a:hover {
+            background-color: #575757;
+            border-radius: 5px;
+        }
+
+        /* Estilos para el contenido de la página */
+        body {
+            margin-top: 60px; /* Para evitar que el contenido quede tapado por el navbar */
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
-    <h1>Lista
+    <!-- Barra de navegación -->
+    <nav>
+        <ul>
+            <li><a href="{% url 'lista_usuarios' %}">Usuarios</a></li>
+            <li><a href="{% url 'crear_usuario' %}">Crear Usuario</a></li>
+            <li><a href="{% url 'lista_envios' %}">Envíos</a></li>
+        </ul>
+    </nav>
+
+    <h1>Lista de Envíos</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Destinatario</th>
+                <th>Dirección de Origen</th>
+                <th>Dirección de Destino</th>
+                <th>Peso</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for envio in envios %}
+                <tr>
+                    <td>{{ envio.destinatario_nombre }}</td>
+                    <td>{{ envio.origen_direccion }}</td>
+                    <td>{{ envio.destino_direccion }}</td>
+                    <td>{{ envio.peso }}</td>
+                    <td>{{ envio.estado }}</td>
+                    <td>
+                        <a href="{% url 'ver_envio' envio.id %}">Ver</a>
+                        <a href="{% url 'editar_envio' envio.id %}">Editar</a>
+                        <a href="{% url 'eliminar_envio' envio.id %}">Eliminar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'crear_envio' %}">Crear un nuevo Envío</a>
+</body>
+</html>
