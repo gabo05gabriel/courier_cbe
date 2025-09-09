@@ -48,7 +48,7 @@ ROOT_URLCONF = 'myproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],  # You can add custom template directories here
+        'DIRS': [BASE_DIR / 'templates'],  # You can add custom template directories here
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -109,3 +109,12 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Disable SSL redirect for development (Ensure you're using HTTP)
+SECURE_SSL_REDIRECT = False
+
+# Disable HTTP Strict Transport Security (HSTS)
+SECURE_HSTS = False
+
+# Ensure you're not in a production environment
+SECURE = False

@@ -4,81 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles del Envío</title>
-    <style>
-        /* Estilos para el navbar */
-        nav {
-            background-color: #333;
-            color: white;
-            padding: 10px;
-            position: fixed;
-            width: 100%;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-        }
-
-        nav ul {
-            list-style-type: none;
-            display: flex;
-            justify-content: space-around;
-            padding: 0;
-            margin: 0;
-        }
-
-        nav ul li a {
-            color: white;
-            text-decoration: none;
-            padding: 10px;
-        }
-
-        nav ul li a:hover {
-            background-color: #575757;
-            border-radius: 5px;
-        }
-
-        /* Estilos para el contenido de la página */
-        body {
-            margin-top: 60px; /* Para evitar que el contenido quede tapado por el navbar */
-            font-family: Arial, sans-serif;
-        }
-
-        #map {
-            height: 400px;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .container {
-            padding: 20px;
-        }
-
-        .details {
-            margin-bottom: 20px;
-        }
-
-        .details strong {
-            margin-right: 10px;
-        }
-
-        a {
-            color: #007BFF;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
 </head>
 <body>
-    <!-- Barra de navegación -->
-    <nav>
-        <ul>
-            <li><a href="{% url 'lista_usuarios' %}">Usuarios</a></li>
-            <li><a href="{% url 'crear_usuario' %}">Crear Usuario</a></li>
-            <li><a href="{% url 'lista_envios' %}">Envíos</a></li>
-        </ul>
-    </nav>
+   
 
     <div class="container">
         <h1>Detalles del Envío</h1>
@@ -98,7 +26,7 @@
         </a>
 
         <!-- Contenedor del mapa -->
-        <div id="map"></div>
+        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
 
         <!-- Enlace para volver -->
         <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
@@ -119,6 +47,6 @@
     </script>
 
     <!-- Cargar Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
 </body>
 </html>

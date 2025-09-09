@@ -2,9 +2,27 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('envios/', views.lista_envios, name='lista_envios'),
-    path('envios/crear/', views.crear_envio, name='crear_envio'),
-    path('envios/<int:envio_id>/', views.ver_envio, name='ver_envio'),
-    path('envios/<int:envio_id>/editar/', views.editar_envio, name='editar_envio'),
-    path('envios/<int:envio_id>/eliminar/', views.eliminar_envio, name='eliminar_envio'),
+    # Rutas para envíos
+    path('', views.lista_envios, name='lista_envios'),  # Redirige a la lista de envíos en la página principal
+    path('envios/crear/', views.crear_envio, name='crear_envio'),  # Crear un nuevo envío
+    path('envios/<int:envio_id>/', views.ver_envio, name='ver_envio'),  # Ver detalles de un envío
+    path('envios/<int:envio_id>/editar/', views.editar_envio, name='editar_envio'),  # Editar un envío
+    path('envios/<int:envio_id>/eliminar/', views.eliminar_envio, name='eliminar_envio'),  # Eliminar un envío
+
+    # Rutas para entregas
+    path('entregas/', views.lista_entregas, name='lista_entregas'),  # Lista de entregas
+    path('entregas/crear/', views.registrar_entrega, name='registrar_entrega'),  # Registrar nueva entrega
+    path('entregas/<int:entrega_id>/', views.ver_entrega, name='ver_entrega'),  # Ver detalles de una entrega
+    path('entregas/<int:entrega_id>/editar/', views.editar_entrega, name='editar_entrega'),  # Editar una entrega
+    path('entregas/<int:entrega_id>/eliminar/', views.eliminar_entrega, name='eliminar_entrega'),  # Eliminar una entrega
+
+    # Rutas para historial de envío
+    path('envios/<int:envio_id>/historial/', views.historial_envio, name='historial_envio'),  # Ver historial de un envío
+    path('envios/<int:envio_id>/historial/<int:evento_id>/', views.ver_evento_historial, name='ver_evento_historial'),  # Ver un evento específico en el historial
+
+    # Rutas para incidentes
+    path('envios/<int:envio_id>/incidentes/', views.registrar_incidente, name='registrar_incidente'),  # Registrar incidente en un envío
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/', views.ver_incidente, name='ver_incidente'),  # Ver detalles de un incidente
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/editar/', views.editar_incidente, name='editar_incidente'),  # Editar un incidente
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/eliminar/', views.eliminar_incidente, name='eliminar_incidente'),  # Eliminar un incidente
 ]

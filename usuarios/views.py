@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import logout  # Importa el método logout
 from .models import Usuario
 from .forms import UsuarioForm
 
@@ -42,3 +43,8 @@ def eliminar_usuario(request, usuario_id):
         usuario.delete()
         return redirect('lista_usuarios')  # Redirigir a la lista de usuarios
     return render(request, 'usuarios/eliminar_usuario.html', {'usuario': usuario})
+
+# Vista para cerrar sesión
+def cerrar_sesion(request):
+    logout(request)  # Cierra la sesión del usuario
+    return redirect('lista_envios')  # Redirigir a la lista de envíos después de cerrar sesión
