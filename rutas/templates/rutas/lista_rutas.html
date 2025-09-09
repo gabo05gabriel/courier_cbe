@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Ruta</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Detalles de la Ruta</h1>
+
+        <div class="details">
+            <p><strong>Nombre:</strong> {{ ruta.nombre }}</p>
+            <p><strong>Dirección de Origen:</strong> {{ ruta.origen_direccion }}</p>
+            <p><strong>Dirección de Destino:</strong> {{ ruta.destino_direccion }}</p>
+            <p><strong>Estado:</strong> {{ ruta.estado }}</p>
+        </div>
+
+        <!-- Enlace directo a Google Maps -->
+        <h2>Ubicación de Origen y Destino</h2>
+        <a href="https://www.google.com/maps/dir/?api=1&origin={{ ruta.origen_direccion }}&destination={{ ruta.destino_direccion }}" target="_blank">
+            Ver ruta en Google Maps
+        </a>
+
+        <!-- Contenedor del mapa -->
+        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+        <!-- Enlace para volver -->
+        <a href="{% url 'lista_rutas' %}">Volver a la lista de rutas</a>
+    </div>
+
+    <!-- Script del mapa -->
+    <script>
+        function initMap() {
+            // Coordenadas predeterminadas de La Paz, Bolivia
+            const laPaz = { lat: -16.500000, lng: -68.119300 };
+
+            // Inicializar mapa centrado en La Paz
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: laPaz
+            });
+        }
+    </script>
+
+    <!-- Cargar Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+</body>
+</html>

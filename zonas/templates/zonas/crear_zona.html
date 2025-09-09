@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Zona</title>
+</head>
+<body>
+    <h1>Crear nueva zona</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}  <!-- Aquí vienen nombre, latitud, longitud -->
+
+        <!-- Mapa para seleccionar -->
+        <h2>Seleccionar ubicación en el mapa</h2>
+        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+        <button type="submit">Guardar</button>
+    </form>
+
+    <a href="{% url 'lista_zonas' %}">Volver a la lista de zonas</a>
+
+    <script>
+        function initMap() {
+            const initialPosition = { lat: -16.5, lng: -68.1193 };
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: initialPosition,
+            });
+
+            const marker = new google.maps.Marker({
+                position: initialPosition,
+                map: map,
+                draggable: true,
+            });
+
+            // Asigna al input generado por Django
+            google.maps.event.addListener(marker, 'dragend', function(event) {
+                // Llenar los campos ocultos del form de Django
+                const latInput = document.getElementById("id_latitud");
+                const lngInput = document.getElementById("id_longitud");
+
+                if (latInput && lngInput) {
+                    latInput.value = event.latLng.lat();
+                    lngInput.value = event.latLng.lng();
+                }
+            });
+        }
+    </script>
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+</body>
+</html>

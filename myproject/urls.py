@@ -22,6 +22,8 @@ urlpatterns = [
 
     path('logout/', auth_views.LogoutView.as_view(), name='cerrar_sesion'),  # Vista de cerrar sesión
 
+    path('zonas/', include('zonas.urls')),
+
     # Si tienes otras aplicaciones, agrega las rutas aquí
     # path('otros/', include('otros.urls')),  # Incluye las rutas de la aplicación otros
 ]

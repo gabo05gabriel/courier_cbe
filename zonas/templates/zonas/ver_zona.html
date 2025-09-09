@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Zona</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Detalles de la Zona</h1>
+
+        <div class="details">
+            <p><strong>Nombre:</strong> {{ zona.nombre }}</p>
+            <p><strong>Latitud:</strong> {{ zona.latitud }}</p>
+            <p><strong>Longitud:</strong> {{ zona.longitud }}</p>
+        </div>
+
+        <!-- Enlace directo a Google Maps -->
+        <h2>Ubicación Geográfica</h2>
+        <a href="https://www.google.com/maps/search/?api=1&query={{ zona.latitud }},{{ zona.longitud }}" target="_blank">
+            Ver ubicación en Google Maps
+        </a>
+
+        <!-- Contenedor del mapa -->
+        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+        <!-- Enlace para volver -->
+        <a href="{% url 'lista_zonas' %}">Volver a Zonas Registradas</a>
+    </div>
+
+    <!-- Script del mapa -->
+    <script>
+        function initMap() {
+            const ubicacion = {
+                lat: parseFloat("{{ zona.latitud }}"),
+                lng: parseFloat("{{ zona.longitud }}")
+            };
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: ubicacion
+            });
+
+            new google.maps.Marker({
+                position: ubicacion,
+                map: map,
+                title: "{{ zona.nombre }}"
+            });
+        }
+    </script>
+
+    <!-- Cargar Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+</body>
+</html>
