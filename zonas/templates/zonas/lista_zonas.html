@@ -6,26 +6,18 @@
     <title>Lista de Zonas</title>
 </head>
 <body>
-    <div class="container">
-        <h1>Zonas Registradas</h1>
-
-        {% if zonas %}
-            <ul>
-                {% for zona in zonas %}
-                    <li>
-                        <strong>{{ zona.nombre }}</strong><br>
-                        Latitud: {{ zona.latitud }}<br>
-                        Longitud: {{ zona.longitud }}<br>
-                        <a href="{% url 'ver_zona' zona.id %}">Ver detalles</a>
-                    </li>
-                    <hr>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No hay zonas registradas.</p>
-        {% endif %}
-
-        <a href="{% url 'crear_zona' %}">Crear nueva zona</a>
-    </div>
+    <h1>Lista de Zonas</h1>
+    
+    <ul>
+        {% for zona in zonas %}
+            <li>
+                <a href="{% url 'ver_zona' zona.id %}">{{ zona.nombre }}</a>  <!-- Enlace para ver los detalles de la zona -->
+            </li>
+        {% empty %}
+            <li>No hay zonas registradas.</li>
+        {% endfor %}
+    </ul>
+    
+    <a href="{% url 'crear_zona' %}">Crear nueva zona</a>  <!-- Enlace para crear una nueva zona -->
 </body>
 </html>

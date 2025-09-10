@@ -16,10 +16,10 @@ class Envio(models.Model):
     ruta_id = models.IntegerField(null=True, blank=True)  # Relación con la ruta si es necesario
     
     # Agregar latitud y longitud para origen y destino
-    latitud_origen = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    longitud_origen = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    latitud_destino = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
-    longitud_destino = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    latitud_origen = models.DecimalField(max_digits=20, decimal_places=15, null=True, blank=True)
+    longitud_origen = models.DecimalField(max_digits=20, decimal_places=15, null=True, blank=True)
+    latitud_destino = models.DecimalField(max_digits=20, decimal_places=15, null=True, blank=True)
+    longitud_destino = models.DecimalField(max_digits=20, decimal_places=15, null=True, blank=True)
 
     def __str__(self):
         return f"Envio {self.id} - {self.destinatario_nombre}"

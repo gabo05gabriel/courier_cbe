@@ -11,45 +11,63 @@
 
         <div class="details">
             <p><strong>Nombre:</strong> {{ zona.nombre }}</p>
-            <p><strong>Latitud:</strong> {{ zona.latitud }}</p>
-            <p><strong>Longitud:</strong> {{ zona.longitud }}</p>
+            <p><strong>Área (coordenadas):</strong> {{ area_coordinates }}</p>
         </div>
 
-        <!-- Enlace directo a Google Maps -->
+        <!-- Enlace directo a Google Maps para ver la ubicación -->
         <h2>Ubicación Geográfica</h2>
-        <a href="https://www.google.com/maps/search/?api=1&query={{ zona.latitud }},{{ zona.longitud }}" target="_blank">
+        <a href="https://www.google.com/maps?q={{ zona.latitud }},{{ zona.longitud }}" target="_blank">
             Ver ubicación en Google Maps
         </a>
 
         <!-- Contenedor del mapa -->
+        <h2>Ubicación de la Zona en el Mapa</h2>
         <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
 
-        <!-- Enlace para volver -->
+        <!-- Enlace para volver a la lista de zonas -->
         <a href="{% url 'lista_zonas' %}">Volver a Zonas Registradas</a>
     </div>
 
-    <!-- Script del mapa -->
+    <!-- Script para el mapa -->
     <script>
         function initMap() {
-            const ubicacion = {
-                lat: parseFloat("{{ zona.latitud }}"),
-                lng: parseFloat("{{ zona.longitud }}")
-            };
+            // Coordenadas predeterminadas de La Paz, Bolivia
+            const laPaz = { lat: -16.500000, lng: -68.119300 };
 
+            // Inicializar mapa centrado en La Paz
             const map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
-                center: ubicacion
+                center: laPaz
             });
 
-            new google.maps.Marker({
-                position: ubicacion,
-                map: map,
-                title: "{{ zona.nombre }}"
-            });
+            // Convertir las coordenadas del área a una lista de coordenadas de Google Maps
+            const areaCoordinates = JSON.parse('{{ area_coordinates|escapejs }}');  // Asegurándonos de que los datos sean válidos
+
+            // Verificar si el polígono tiene coordenadas
+            if (Array.isArray(areaCoordinates) && areaCoordinates.length > 0) {
+                // Crear una línea conectando las coordenadas del área
+                const line = new google.maps.Polyline({
+                    path: areaCoordinates,  // Coordenadas de la línea
+                    geodesic: true,  // Usar geodesia para curvas de la Tierra
+                    strokeColor: "#FF0000",  // Color de la línea
+                    strokeOpacity: 1.0,
+                    strokeWeight: 2
+                });
+
+                // Agregar la línea al mapa
+                line.setMap(map);
+
+                // Opcional: Ajustar el zoom para mostrar toda la línea
+                const bounds = new google.maps.LatLngBounds();
+                areaCoordinates.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds);
+            } else {
+                console.error("Las coordenadas del área no son válidas.");
+            }
         }
     </script>
 
     <!-- Cargar Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
 </body>
 </html>

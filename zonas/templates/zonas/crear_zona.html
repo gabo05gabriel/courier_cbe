@@ -6,15 +6,18 @@
     <title>Crear Zona</title>
 </head>
 <body>
-    <h1>Crear nueva zona</h1>
+    <h1>Crear Nueva Zona</h1>
 
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}  <!-- Aquí vienen nombre, latitud, longitud -->
+        {{ form.as_p }}  <!-- Aquí vienen nombre y otros campos -->
 
-        <!-- Mapa para seleccionar -->
-        <h2>Seleccionar ubicación en el mapa</h2>
+        <!-- Mapa para seleccionar el área -->
+        <h2>Seleccionar área en el mapa</h2>
         <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+        <!-- Campo oculto para las coordenadas del polígono -->
+        <input type="hidden" name="zona_area" id="id_zona_area">
 
         <button type="submit">Guardar</button>
     </form>
@@ -22,34 +25,57 @@
     <a href="{% url 'lista_zonas' %}">Volver a la lista de zonas</a>
 
     <script>
+        let map;
+        let drawingManager;
+        let selectedShape;
+        let zoneAreaCoordinates = [];
+
         function initMap() {
+            // Posición inicial (La Paz, Bolivia)
             const initialPosition = { lat: -16.5, lng: -68.1193 };
 
-            const map = new google.maps.Map(document.getElementById("map"), {
+            // Crear el mapa
+            map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
                 center: initialPosition,
             });
 
-            const marker = new google.maps.Marker({
-                position: initialPosition,
-                map: map,
-                draggable: true,
+            // Configuración del DrawingManager para permitir el dibujo de polígonos
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,  // Solo permite dibujar polígonos
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: [google.maps.drawing.OverlayType.POLYGON],
+                },
+                polygonOptions: {
+                    editable: true,  // Permite editar el polígono
+                    draggable: true,  // Permite mover el polígono
+                },
             });
 
-            // Asigna al input generado por Django
-            google.maps.event.addListener(marker, 'dragend', function(event) {
-                // Llenar los campos ocultos del form de Django
-                const latInput = document.getElementById("id_latitud");
-                const lngInput = document.getElementById("id_longitud");
+            drawingManager.setMap(map);
 
-                if (latInput && lngInput) {
-                    latInput.value = event.latLng.lat();
-                    lngInput.value = event.latLng.lng();
+            // Cuando se termina de dibujar el polígono
+            google.maps.event.addListener(drawingManager, 'overlaycomplete', function(event) {
+                if (event.type === google.maps.drawing.OverlayType.POLYGON) {
+                    // Eliminar el polígono anterior si existe
+                    if (selectedShape) {
+                        selectedShape.setMap(null);
+                    }
+
+                    // Guardar el nuevo polígono
+                    selectedShape = event.overlay;
+                    zoneAreaCoordinates = selectedShape.getPath().getArray(); // Obtener las coordenadas del polígono
+
+                    // Mostrar las coordenadas en el input oculto del formulario
+                    document.getElementById('id_zona_area').value = JSON.stringify(zoneAreaCoordinates);
                 }
             });
         }
     </script>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+    <!-- Cargar la API de Google Maps con la librería de dibujo -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap&libraries=drawing" async defer></script>
 </body>
 </html>
