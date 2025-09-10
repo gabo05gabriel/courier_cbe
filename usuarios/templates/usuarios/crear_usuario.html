@@ -1,28 +1,33 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Usuario</title>
+
+    <!-- Cargar archivos estáticos de Django -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
-    <!-- Barra de navegación -->
-    <nav>
-        <ul>
-            <li><a href="{% url 'usuarios:lista_usuarios' %}">Usuarios</a></li>
-            <li><a href="{% url 'usuarios:crear_usuario' %}">Crear Usuario</a></li>
-            <li><a href="{% url 'lista_envios' %}">Envíos</a></li>
-        </ul>
-    </nav>
+    <!-- Contenedor principal de la página -->
+    <div class="page-container">
+       
 
-    <div class="container">
-        <h1>Crear un Nuevo Usuario</h1>
-        <form method="POST">
-            {% csrf_token %}
-            {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
-            <button type="submit">Crear Usuario</button>
-        </form>
-        <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a>
+        <!-- Contenedor del formulario -->
+        <div class="form-container">
+            <h1>Crear un Nuevo Usuario</h1>
+            <p>Introduce los detalles del nuevo usuario.</p>
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
+                <button type="submit">Crear Usuario</button>
+            </form>
+            <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a>
+        </div>
     </div>
 </body>
 </html>

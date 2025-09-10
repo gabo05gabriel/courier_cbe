@@ -99,7 +99,12 @@ USE_I18N = True
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'  # Serve static files from the 'static' directory
+
+# Define the path to the static files directory
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',  # If you're using custom static files
+]
 
 # Media files (used for image uploads, etc.)
 MEDIA_URL = '/media/'  # Define this if you're handling file uploads
@@ -119,3 +124,7 @@ SECURE_HSTS = False
 
 # Ensure you're not in a production environment
 SECURE = False
+
+# Enable the serving of static files during development
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
