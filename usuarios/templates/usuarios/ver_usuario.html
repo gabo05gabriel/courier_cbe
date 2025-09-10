@@ -11,6 +11,6 @@
     <p><strong>Email:</strong> {{ usuario.email }}</p>
     <p><strong>Teléfono:</strong> {{ usuario.telefono }}</p>
     <p><strong>Rol:</strong> {{ usuario.rol.nombre }}</p>
-    <a href="{% url 'lista_usuarios' %}">Volver a la lista de usuarios</a>
+    <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a> <!-- Usar el espacio de nombres 'usuarios' -->
 </body>
 </html>

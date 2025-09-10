@@ -9,8 +9,8 @@
     <!-- Barra de navegación -->
     <nav>
         <ul>
-            <li><a href="{% url 'lista_usuarios' %}">Usuarios</a></li>
-            <li><a href="{% url 'crear_usuario' %}">Crear Usuario</a></li>
+            <li><a href="{% url 'usuarios:lista_usuarios' %}">Usuarios</a></li>
+            <li><a href="{% url 'usuarios:crear_usuario' %}">Crear Usuario</a></li>
             <li><a href="{% url 'lista_envios' %}">Envíos</a></li>
         </ul>
     </nav>
@@ -22,7 +22,7 @@
             {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
             <button type="submit">Crear Usuario</button>
         </form>
-        <a href="{% url 'lista_usuarios' %}">Volver a la lista de usuarios</a>
+        <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a>
     </div>
 </body>
 </html>

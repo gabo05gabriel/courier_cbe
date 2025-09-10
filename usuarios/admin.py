@@ -1,5 +1,8 @@
+# myproject/urls.py
 from django.contrib import admin
-from .models import Usuario, Rol
+from django.urls import path, include
 
-admin.site.register(Usuario)
-admin.site.register(Rol)
+urlpatterns = [
+    path('admin/', admin.site.urls),  # Esta es la referencia correcta a 'admin'
+    path('usuarios/', include('usuarios.urls')),  # Rutas de la aplicación 'usuarios'
+]

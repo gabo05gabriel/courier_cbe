@@ -10,7 +10,7 @@
     {% include 'includes/navbar.html' %}
 
     <h1>Lista de Usuarios</h1>
-    <table>
+    <table border="1">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -28,14 +28,15 @@
                     <td>{{ usuario.telefono }}</td>
                     <td>{{ usuario.rol.nombre }}</td>
                     <td>
-                        <a href="{% url 'ver_usuario' usuario.id %}">Ver</a>
-                        <a href="{% url 'editar_usuario' usuario.id %}">Editar</a>
-                        <a href="{% url 'eliminar_usuario' usuario.id %}">Eliminar</a>
+                        <a href="{% url 'usuarios:ver_usuario' usuario.id %}">Ver</a> |
+                        <a href="{% url 'usuarios:editar_usuario' usuario.id %}">Editar</a> |
+                        <a href="{% url 'usuarios:eliminar_usuario' usuario.id %}">Eliminar</a>
                     </td>
                 </tr>
             {% endfor %}
         </tbody>
     </table>
-    <a href="{% url 'crear_usuario' %}">Crear un nuevo Usuario</a>
+
+    <a href="{% url 'usuarios:crear_usuario' %}">Crear un nuevo Usuario</a>
 </body>
 </html>

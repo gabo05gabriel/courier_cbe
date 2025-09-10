@@ -9,9 +9,9 @@
     <h1>Editar Usuario</h1>
     <form method="POST">
         {% csrf_token %}
-        {{ form.as_p }}
+        {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
         <button type="submit">Actualizar Usuario</button>
     </form>
-    <a href="{% url 'lista_usuarios' %}">Volver a la lista de usuarios</a>
+    <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a> <!-- Usa el espacio de nombres 'usuarios' -->
 </body>
 </html>
