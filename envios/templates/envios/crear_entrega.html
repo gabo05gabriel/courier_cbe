@@ -1,0 +1,66 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Envío</title>
+<!-- Cargar archivos estáticos de Django -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <h1>Crear un Nuevo Envío</h1>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }} <!-- Renderiza el formulario con los campos existentes -->
+
+        <!-- Mapa para seleccionar latitud y longitud -->
+        <h2>Seleccionar ubicación en el mapa</h2>
+        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+        <!-- Campos ocultos para latitud y longitud -->
+        <input type="hidden" name="latitud_origen" id="id_latitud_origen">
+        <input type="hidden" name="longitud_origen" id="id_longitud_origen">
+        
+        <button type="submit">Crear Envío</button>
+    </form>
+
+    <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
+
+    <script>
+        // Inicializar el mapa de Google
+        function initMap() {
+            const initialPosition = { lat: -16.5, lng: -68.1193 }; // Coordenadas iniciales (La Paz, Bolivia)
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: initialPosition,
+            });
+
+            const marker = new google.maps.Marker({
+                position: initialPosition,
+                map: map,
+                draggable: true,  // Permite que el marcador sea arrastrable
+            });
+
+            // Función para actualizar los campos ocultos de latitud y longitud cuando el marcador es arrastrado
+            google.maps.event.addListener(marker, 'dragend', function(event) {
+                const latInput = document.getElementById("id_latitud_destino");
+                const lngInput = document.getElementById("id_longitud_destino");
+
+                if (latInput && lngInput) {
+                    latInput.value = event.latLng.lat();
+                    lngInput.value = event.latLng.lng();
+                }
+            });
+        }
+    </script>
+
+    <!-- Incluir Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+</body>
+</html>

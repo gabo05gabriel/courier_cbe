@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Zona</title>
-<!-- Cargar archivos estáticos de Django -->
+    <!-- Cargar archivos estáticos de Django -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
@@ -74,8 +74,13 @@
                     selectedShape = event.overlay;
                     zoneAreaCoordinates = selectedShape.getPath().getArray(); // Obtener las coordenadas del polígono
 
+                    // Crear un array para las coordenadas (latitud, longitud)
+                    const coordinates = zoneAreaCoordinates.map(function(latLng) {
+                        return { lat: latLng.lat(), lng: latLng.lng() };
+                    });
+
                     // Mostrar las coordenadas en el input oculto del formulario
-                    document.getElementById('id_zona_area').value = JSON.stringify(zoneAreaCoordinates);
+                    document.getElementById('id_zona_area').value = JSON.stringify(coordinates);
                 }
             });
         }

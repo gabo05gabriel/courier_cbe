@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Entrega</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Crear Nueva Entrega</h1>
+
+        <form action="#" method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="envio">Envío:</label>
+                <input type="text" id="envio" name="envio" placeholder="ID de Envío" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mensajero">Mensajero:</label>
+                <input type="text" id="mensajero" name="mensajero" placeholder="Nombre del Mensajero" required>
+            </div>
+
+            <div class="form-group">
+                <label for="estado">Estado:</label>
+                <select id="estado" name="estado" required>
+                    <option value="Entregado">Entregado</option>
+                    <option value="Rechazado">Rechazado</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="firma">Firma de Entrega:</label>
+                <input type="file" id="firma" name="firma">
+            </div>
+
+            <div class="form-group">
+                <label for="foto">Foto de Entrega:</label>
+                <input type="file" id="foto" name="foto">
+            </div>
+
+            <button type="submit" class="btn">Crear Entrega</button>
+        </form>
+
+        <div class="actions">
+            <a href="lista_entregas.html" class="btn">Volver a la lista de entregas</a>
+        </div>
+    </div>
+</body>
+</html>
