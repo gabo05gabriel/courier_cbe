@@ -5,19 +5,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Entrega</title>
+    <title>Registrar Entrega</title>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 <body>
-    <h1>Editar Entrega #{{ entrega.id }}</h1>
+    <h1>Registrar Entrega para {{ envio.destinatario_nombre }}</h1>
 
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit">Actualizar</button>
+        <button type="submit">Guardar</button>
     </form>
 
     <br>
-    <a href="{% url 'ver_entrega' entrega.id %}">Cancelar</a>
+    <a href="{% url 'ver_envio' envio.id %}">Volver al envío</a>
 </body>
 </html>

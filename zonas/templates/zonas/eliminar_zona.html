@@ -1,14 +1,14 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eliminar Envío</title>
+    <title>Eliminar Zona</title>
 
     <!-- Archivos CSS -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
-    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
     <style>
@@ -29,7 +29,7 @@
 
         p {
             font-size: 16px;
-            margin-bottom: 15px;
+            margin-bottom: 25px;
         }
 
         .btn-eliminar {
@@ -65,18 +65,16 @@
     </style>
 </head>
 <body>
-    <!-- Navbar -->
     {% include 'includes/navbar.html' %}
 
     <div class="container">
-        <h1>¿Estás seguro de que quieres eliminar este envío?</h1>
-
-        <p><strong>Destinatario:</strong> {{ envio.destinatario_nombre }}</p>
+        <h1>Eliminar Zona</h1>
+        <p>¿Estás seguro de que deseas eliminar la zona <strong>{{ zona.nombre }}</strong>?</p>
 
         <form method="POST">
             {% csrf_token %}
-            <button type="submit" class="btn-eliminar">❌ Eliminar Envío</button>
-            <a href="{% url 'lista_envios' %}" class="btn-cancelar">⬅ Cancelar</a>
+            <button type="submit" class="btn-eliminar">❌ Sí, eliminar</button>
+            <a href="{% url 'lista_zonas' %}" class="btn-cancelar">⬅ Cancelar</a>
         </form>
     </div>
 </body>

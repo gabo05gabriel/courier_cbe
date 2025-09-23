@@ -1,15 +1,24 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crear Envío</title>
-<!-- Cargar archivos estáticos de Django -->
+    <!-- Cargar archivos estáticos de Django -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <h1>Crear un Nuevo Envío</h1>
@@ -18,49 +27,83 @@
         {% csrf_token %}
         {{ form.as_p }} <!-- Renderiza el formulario con los campos existentes -->
 
-        <!-- Mapa para seleccionar latitud y longitud -->
-        <h2>Seleccionar ubicación en el mapa</h2>
-        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+        <!-- Paso 1: Selección de Origen -->
+        <div id="origen-section">
+            <h2>Seleccionar ubicación de ORIGEN</h2>
+            <div id="map-origen" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+            <input type="hidden" name="latitud_origen" id="id_latitud_origen">
+            <input type="hidden" name="longitud_origen" id="id_longitud_origen">
+            <button type="button" id="btn-siguiente">➡ Siguiente</button>
+        </div>
 
-        <!-- Campos ocultos para latitud y longitud -->
-        <input type="hidden" name="latitud_origen" id="id_latitud_origen">
-        <input type="hidden" name="longitud_origen" id="id_longitud_origen">
-        
-        <button type="submit">Crear Envío</button>
+        <!-- Paso 2: Selección de Destino -->
+        <div id="destino-section" class="hidden">
+            <h2>Seleccionar ubicación de DESTINO</h2>
+            <div id="map-destino" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+            <input type="hidden" name="latitud_destino" id="id_latitud_destino">
+            <input type="hidden" name="longitud_destino" id="id_longitud_destino">
+            
+            <button type="submit">✅ Crear Envío</button>
+        </div>
     </form>
 
-    <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
+    <a href="{% url 'lista_envios' %}">⬅ Volver a la lista de envíos</a>
 
     <script>
-        // Inicializar el mapa de Google
+        let origenMap, destinoMap;
+        let origenMarker, destinoMarker;
+
         function initMap() {
-            const initialPosition = { lat: -16.5, lng: -68.1193 }; // Coordenadas iniciales (La Paz, Bolivia)
+            const laPaz = { lat: -16.5, lng: -68.1193 };
 
-            const map = new google.maps.Map(document.getElementById("map"), {
+            // MAPA DE ORIGEN
+            origenMap = new google.maps.Map(document.getElementById("map-origen"), {
                 zoom: 13,
-                center: initialPosition,
+                center: laPaz,
             });
 
-            const marker = new google.maps.Marker({
-                position: initialPosition,
-                map: map,
-                draggable: true,  // Permite que el marcador sea arrastrable
+            origenMarker = new google.maps.Marker({
+                position: laPaz,
+                map: origenMap,
+                draggable: true,
             });
 
-            // Función para actualizar los campos ocultos de latitud y longitud cuando el marcador es arrastrado
-            google.maps.event.addListener(marker, 'dragend', function(event) {
-                const latInput = document.getElementById("id_latitud_destino");
-                const lngInput = document.getElementById("id_longitud_destino");
+            google.maps.event.addListener(origenMarker, 'dragend', function(event) {
+                document.getElementById("id_latitud_origen").value = event.latLng.lat();
+                document.getElementById("id_longitud_origen").value = event.latLng.lng();
+            });
 
-                if (latInput && lngInput) {
-                    latInput.value = event.latLng.lat();
-                    lngInput.value = event.latLng.lng();
+            // MAPA DE DESTINO (se inicializa pero está oculto)
+            destinoMap = new google.maps.Map(document.getElementById("map-destino"), {
+                zoom: 13,
+                center: laPaz,
+            });
+
+            destinoMarker = new google.maps.Marker({
+                position: laPaz,
+                map: destinoMap,
+                draggable: true,
+            });
+
+            google.maps.event.addListener(destinoMarker, 'dragend', function(event) {
+                document.getElementById("id_latitud_destino").value = event.latLng.lat();
+                document.getElementById("id_longitud_destino").value = event.latLng.lng();
+            });
+
+            // Botón "Siguiente"
+            document.getElementById("btn-siguiente").addEventListener("click", function() {
+                if (!document.getElementById("id_latitud_origen").value) {
+                    alert("Por favor selecciona primero el punto de ORIGEN moviendo el marcador.");
+                    return;
                 }
+                document.getElementById("origen-section").classList.add("hidden");
+                document.getElementById("destino-section").classList.remove("hidden");
+                google.maps.event.trigger(destinoMap, "resize"); // refresca el mapa
             });
         }
     </script>
 
-    <!-- Incluir Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+    <!-- Google Maps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
 </body>
 </html>

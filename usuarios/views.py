@@ -80,3 +80,6 @@ def home(request):
 
     # Si el usuario está autenticado, mostrar la página de inicio
     return render(request, 'usuarios/home.html')
+
+def mensajeros_view(request):
+    return render(request, "usuarios/mensajeros.html")

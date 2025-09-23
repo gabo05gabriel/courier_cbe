@@ -1,0 +1,28 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Zona</title>
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Editar Zona: {{ zona.nombre }}</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn-editar">💾 Guardar Cambios</button>
+        </form>
+
+        <a href="{% url 'lista_zonas' %}" class="btn-volver">⬅️ Volver a la lista</a>
+    </div>
+</body>
+</html>

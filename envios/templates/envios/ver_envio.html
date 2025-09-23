@@ -1,57 +1,128 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles del Envío</title>
+
+    <!-- Archivos CSS -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .details {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .details p {
+            margin: 8px 0;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .btn-crear {
+            display: inline-block;
+            padding: 10px 18px;
+            background: #007BFF;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .btn-crear:hover {
+            background: #0056b3;
+        }
+
+        a.volver {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        a.volver:hover {
+            color: #1e7e34;
+        }
+    </style>
 </head>
 <body>
-   
+    {% include 'includes/navbar.html' %}
 
     <div class="container">
         <h1>Detalles del Envío</h1>
 
         <div class="details">
             <p><strong>Destinatario:</strong> {{ envio.destinatario_nombre }}</p>
+            <p><strong>Teléfono:</strong> {{ envio.destinatario_telefono }}</p>
             <p><strong>Dirección de Origen:</strong> {{ envio.origen_direccion }}</p>
             <p><strong>Dirección de Destino:</strong> {{ envio.destino_direccion }}</p>
-            <p><strong>Peso:</strong> {{ envio.peso }}</p>
+            <p><strong>Peso:</strong> {{ envio.peso }} kg</p>
             <p><strong>Estado:</strong> {{ envio.estado }}</p>
+            <p><strong>Tipo de Servicio:</strong> {{ envio.tipo_servicio }}</p>
+            <p><strong>Creado en:</strong> {{ envio.creado_en|date:"d/m/Y H:i" }}</p>
         </div>
 
-        <!-- Enlace directo a Google Maps -->
         <h2>Ubicación de Origen y Destino</h2>
-        <a href="https://www.google.com/maps/dir/?api=1&origin={{ envio.origen_direccion }}&destination={{ envio.destino_direccion }}" target="_blank">
-            Ver ruta en Google Maps
-        </a>
+        <div id="map"></div>
 
-        <!-- Contenedor del mapa -->
-        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+        <div style="margin: 25px 0;">
+            <a href="{% url 'registrar_entrega' envio.id %}" class="btn-crear">
+                 Registrar Entrega
+            </a>
+        </div>
 
-        <!-- Enlace para volver -->
-        <a href="{% url 'lista_envios' %}">Volver a la lista de envíos</a>
+        <a href="{% url 'lista_envios' %}" class="volver">⬅ Volver a la lista de envíos</a>
     </div>
 
     <!-- Script del mapa -->
     <script>
         function initMap() {
-            // Coordenadas predeterminadas de La Paz, Bolivia
-            const laPaz = { lat: -16.500000, lng: -68.119300 };
+            const origen = {
+                lat: parseFloat("{{ envio.latitud_origen|default:-16.5 }}"),
+                lng: parseFloat("{{ envio.longitud_origen|default:-68.1193 }}")
+            };
+            const destino = {
+                lat: parseFloat("{{ envio.latitud_destino|default:-16.52 }}"),
+                lng: parseFloat("{{ envio.longitud_destino|default:-68.12 }}")
+            };
 
-            // Inicializar mapa centrado en La Paz
             const map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
-                center: laPaz
+                center: origen
             });
+
+            // Marcadores
+            new google.maps.Marker({ map, position: origen, label: "O" });
+            new google.maps.Marker({ map, position: destino, label: "D" });
+
+            // Ajustar vista para que se vean ambos
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(origen);
+            bounds.extend(destino);
+            map.fitBounds(bounds);
         }
     </script>
 
-    <!-- Cargar Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+    <!-- Token de tu API de Google Maps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
 </body>
 </html>

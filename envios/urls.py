@@ -3,7 +3,7 @@ from . import views
 
 urlpatterns = [
     # Rutas para envíos
-    path('', views.lista_envios, name='lista_envios'),  # Redirige a la lista de envíos en la página principal
+    path('', views.lista_envios, name='lista_envios'),  # Lista de envíos (página principal)
     path('envios/crear/', views.crear_envio, name='crear_envio'),  # Crear un nuevo envío
     path('envios/<int:envio_id>/', views.ver_envio, name='ver_envio'),  # Ver detalles de un envío
     path('envios/<int:envio_id>/editar/', views.editar_envio, name='editar_envio'),  # Editar un envío
@@ -11,7 +11,7 @@ urlpatterns = [
 
     # Rutas para entregas
     path('entregas/', views.lista_entregas, name='lista_entregas'),  # Lista de entregas
-    path('entregas/crear/', views.registrar_entrega, name='registrar_entrega'),  # Registrar nueva entrega
+    path('entregas/crear/<int:envio_id>/', views.registrar_entrega, name='registrar_entrega'),  # Registrar nueva entrega (requiere un envío)
     path('entregas/<int:entrega_id>/', views.ver_entrega, name='ver_entrega'),  # Ver detalles de una entrega
     path('entregas/<int:entrega_id>/editar/', views.editar_entrega, name='editar_entrega'),  # Editar una entrega
     path('entregas/<int:entrega_id>/eliminar/', views.eliminar_entrega, name='eliminar_entrega'),  # Eliminar una entrega
