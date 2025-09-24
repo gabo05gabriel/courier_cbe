@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
 from django.contrib.auth import views as auth_views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     # Ruta del administrador
@@ -25,3 +27,7 @@ urlpatterns = [
     # Vista de cerrar sesión - Movemos esta URL a 'usuarios' para que esté dentro del espacio de nombres correcto
     path('usuarios/logout/', auth_views.LogoutView.as_view(), name='cerrar_sesion'),  # Vista de cierre de sesión
 ]
+
+# Agregar la configuración para servir archivos de medios en desarrollo
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

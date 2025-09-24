@@ -11,7 +11,7 @@
 <body>
     <h1>Registrar Entrega para {{ envio.destinatario_nombre }}</h1>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data">  <!-- Asegúrate de usar enctype para archivos -->
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Guardar</button>

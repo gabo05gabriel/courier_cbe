@@ -15,26 +15,29 @@
     <div class="dashboard-container">
         <div class="welcome-section">
             <h1>Bienvenido al sistema de CBE</h1>
-
         </div>
         
-        <!-- Aquí puedes agregar más secciones del dashboard -->
+        <!-- Contenido principal del Dashboard -->
         <div class="dashboard-content">
             <h2>Resumen de tu actividad</h2>
             <p>Aquí se muestran las métricas y actividades más recientes del usuario.</p>
+            
             <div class="metrics">
-                <!-- Puedes añadir algunas métricas, como estadísticas, gráficas, etc. -->
                 <div class="metric">
                     <h3>Usuarios Registrados</h3>
-                    <p>50</p>
+                    <p>{{ usuarios_count }}</p>
                 </div>
                 <div class="metric">
                     <h3>Envíos Pendientes</h3>
-                    <p>12</p>
+                    <p>{{ envios_pendientes }}</p>
                 </div>
                 <div class="metric">
-                    <h3>Rutas Activas</h3>
-                    <p>5</p>
+                    <h3>Mensajeros Activos</h3>
+                    <p>{{ mensajeros_activos }}</p>
+                </div>
+                <div class="metric">
+                    <h3>% Sobres Entregados</h3>
+                    <p>{{ porcentaje_entregados }} %</p>
                 </div>
             </div>
         </div>

@@ -6,18 +6,63 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Entrega</title>
+    <!-- Enlazar los archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
 </head>
 <body>
-    <h1>Editar Entrega #{{ entrega.id }}</h1>
 
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Actualizar</button>
-    </form>
+    <!-- Incluir el navbar -->
+    {% include 'includes/navbar.html' %}
 
-    <br>
-    <a href="{% url 'ver_entrega' entrega.id %}">Cancelar</a>
+    <div class="container">
+        <h1>Editar Entrega #{{ entrega.id }}</h1>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Mostrar los campos del formulario, incluyendo los campos de foto y firma -->
+            {{ form.as_p }}
+
+            <!-- Campo para seleccionar nueva firma -->
+            <div class="form-group">
+                <label for="firma">Nueva Firma (Dejar en blanco si no se desea cambiar)</label>
+                <input type="file" name="firma" id="firma" class="form-control">
+            </div>
+
+            <!-- Campo para seleccionar nueva foto -->
+            <div class="form-group">
+                <label for="foto">Nueva Foto de Entrega (Dejar en blanco si no se desea cambiar)</label>
+                <input type="file" name="foto" id="foto" class="form-control">
+            </div>
+
+            <!-- Botón para actualizar -->
+            <button type="submit" class="btn submit-btn">Actualizar</button>
+        </form>
+
+        <br>
+        <a href="{% url 'ver_entrega' entrega.id %}" class="btn cancel-btn">Cancelar</a>
+
+        <!-- Mostrar las imágenes de la firma y foto si existen -->
+        <div class="firma">
+            <h2>Firma de entrega</h2>
+            {% if entrega.firma %}
+                <img src="{{ entrega.firma.url }}" alt="Firma de entrega" class="firma-img" style="max-width: 300px; height: auto;">
+            {% else %}
+                <p>No se proporcionó firma.</p>
+            {% endif %}
+        </div>
+
+        <div class="foto">
+            <h2>Foto de entrega</h2>
+            {% if entrega.foto %}
+                <img src="{{ entrega.foto.url }}" alt="Foto de entrega" class="foto-img" style="max-width: 300px; height: auto;">
+            {% else %}
+                <p>No se proporcionó foto de entrega.</p>
+            {% endif %}
+        </div>
+    </div>
+
 </body>
 </html>

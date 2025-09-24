@@ -49,8 +49,8 @@ ROOT_URLCONF = 'myproject.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # You can add custom template directories here
-        'APP_DIRS': True,
+        'DIRS': [BASE_DIR / 'templates'],  # Si tienes templates globales fuera de las apps
+        'APP_DIRS': True,  # Esto le dice a Django que busque templates dentro de cada aplicación
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
@@ -60,6 +60,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'myproject.wsgi.application'
 
@@ -128,3 +129,4 @@ SECURE = False
 # Enable the serving of static files during development
 if DEBUG:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+

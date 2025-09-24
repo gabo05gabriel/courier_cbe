@@ -15,19 +15,25 @@
 <body>
     <!-- Contenedor principal de la página -->
     <div class="page-container">
-       
 
-        <!-- Contenedor del formulario -->
-        <div class="form-container">
-            <h1>Crear un Nuevo Usuario</h1>
-            <p>Introduce los detalles del nuevo usuario.</p>
-            <form method="POST">
-                {% csrf_token %}
-                {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
-                <button type="submit">Crear Usuario</button>
-            </form>
-            <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a>
-        </div>
+        <!-- Contenido principal -->
+        <main class="content">
+            <section class="form-container">
+                <h1>Crear un Nuevo Usuario</h1>
+                <p>Introduce los detalles del nuevo usuario.</p>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
+                    <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                </form>
+
+                <p>
+                    <a href="{% url 'usuarios:lista_usuarios' %}" class="btn btn-link">Volver a la lista de usuarios</a>
+                </p>
+            </section>
+        </main>
+        
     </div>
 </body>
 </html>

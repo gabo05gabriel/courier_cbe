@@ -162,28 +162,50 @@ def ver_entrega(request, entrega_id):
 
 # Vista para registrar una entrega
 def registrar_entrega(request, envio_id):
-    envio = get_object_or_404(Envio, id=envio_id)
-    if request.method == 'POST':
-        form = EntregaForm(request.POST)
+    envio = Envio.objects.get(id=envio_id)
+
+    if request.method == "POST":
+        form = EntregaForm(request.POST, request.FILES)  # Usar request.FILES para los archivos
         if form.is_valid():
             entrega = form.save(commit=False)
-            entrega.envio = envio  # Asociar la entrega al envío
+            entrega.envio = envio
             entrega.save()
             return redirect('ver_envio', envio_id=envio.id)
     else:
-        form = EntregaForm()  # Crear un formulario vacío para el registro
-    return render(request, 'envios/registrar_entrega.html', {'form': form, 'envio': envio})
+        form = EntregaForm()
 
+    return render(request, 'envios/registrar_entrega.html', {'form': form, 'envio': envio})
 # Vista para editar una entrega
 def editar_entrega(request, entrega_id):
+    # Obtener la entrega
     entrega = get_object_or_404(Entrega, id=entrega_id)
+    
     if request.method == 'POST':
-        form = EntregaForm(request.POST, instance=entrega)
+        form = EntregaForm(request.POST, request.FILES, instance=entrega)
+
         if form.is_valid():
+            # Asignar el mensajero antes de guardar
+            if not entrega.mensajero:
+                entrega.mensajero = request.user  # Asigna el mensajero actual, o el que sea necesario
+
+            # Eliminar las fotos anteriores si el usuario sube nuevas
+            if 'firma' in request.FILES:
+                if entrega.firma:
+                    entrega.firma.delete()
+
+            if 'foto' in request.FILES:
+                if entrega.foto:
+                    entrega.foto.delete()
+
+            # Guardar los cambios de la entrega
             form.save()
+
+            # Redirigir a la vista de detalles de la entrega
             return redirect('ver_entrega', entrega_id=entrega.id)
+
     else:
         form = EntregaForm(instance=entrega)
+
     return render(request, 'envios/editar_entrega.html', {'form': form, 'entrega': entrega})
 
 # Vista para eliminar una entrega

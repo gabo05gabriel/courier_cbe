@@ -3,6 +3,7 @@ from django.contrib.auth import logout  # Importa el método logout
 from .models import Usuario
 from .forms import UsuarioForm, LoginForm
 from django.contrib import messages
+from envios.models import Envio, Entrega
 
 # Vista para listar los usuarios
 def lista_usuarios(request):
@@ -75,11 +76,41 @@ def login_view(request):
 
 # Vista para la página de inicio
 def home(request):
-    if 'usuario_id' not in request.session:
-        return redirect('usuarios:login')  # Redirigir al login si no está autenticado
+    # Total de usuarios
+    usuarios_count = Usuario.objects.count()
 
-    # Si el usuario está autenticado, mostrar la página de inicio
-    return render(request, 'usuarios/home.html')
+    # Envíos pendientes
+    envios_pendientes = Envio.objects.filter(estado="Pendiente").count()
+
+    # Mensajeros activos (rol relacionado con nombre = "mensajero")
+    mensajeros_activos = Usuario.objects.filter(rol__nombre__iexact="mensajero").count()
+
+    # % de envíos entregados
+    entregados = Entrega.objects.filter(estado="Entregado").count()
+    total_envios = Envio.objects.count()
+    porcentaje_entregados = (entregados / total_envios * 100) if total_envios > 0 else 0
+
+    context = {
+        "usuarios_count": usuarios_count,
+        "envios_pendientes": envios_pendientes,
+        "mensajeros_activos": mensajeros_activos,
+        "porcentaje_entregados": round(porcentaje_entregados, 2),
+    }
+    return render(request, "usuarios/home.html", context)
 
 def mensajeros_view(request):
-    return render(request, "usuarios/mensajeros.html")
+    mensajeros = Usuario.objects.filter(rol__nombre="Mensajero").select_related("perfil_mensajero")
+
+    # Crear lista simple con los datos
+    mensajeros_data = []
+    for m in mensajeros:
+        if m.perfil_mensajero and m.perfil_mensajero.latitud and m.perfil_mensajero.longitud:
+            mensajeros_data.append({
+                "nombre": m.nombre,
+                "lat": float(m.perfil_mensajero.latitud),
+                "lng": float(m.perfil_mensajero.longitud),
+            })
+
+    return render(request, "usuarios/mensajeros.html", {
+        "mensajeros_json": json.dumps(mensajeros_data)  # 🔹 pasamos JSON limpio
+    })
