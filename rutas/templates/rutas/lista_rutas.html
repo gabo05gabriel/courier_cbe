@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalles de la Ruta</title>
-<!-- Enlazar los archivos CSS -->
+    <!-- Enlazar los archivos CSS -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
@@ -18,12 +18,7 @@
     <div class="container">
         <h1>Detalles de la Ruta</h1>
 
-        <div class="details">
-            <p><strong>Nombre:</strong> {{ ruta.nombre }}</p>
-            <p><strong>Dirección de Origen:</strong> {{ ruta.origen_direccion }}</p>
-            <p><strong>Dirección de Destino:</strong> {{ ruta.destino_direccion }}</p>
-            <p><strong>Estado:</strong> {{ ruta.estado }}</p>
-        </div>
+        
 
         <!-- Enlace directo a Google Maps -->
         <h2>Ubicación de Origen y Destino</h2>
@@ -35,7 +30,6 @@
         <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
 
         <!-- Enlace para volver -->
-        <a href="{% url 'lista_rutas' %}">Volver a la lista de rutas</a>
     </div>
 
     <!-- Script del mapa -->
@@ -49,6 +43,57 @@
                 zoom: 13,
                 center: laPaz
             });
+
+            // Coordenadas de Aidisa y Mijail
+            const aidisaStart = { lat: -16.500000, lng: -68.119300 }; // Ubicación de Aidisa (origen)
+            const mijailStart = { lat: -16.505000, lng: -68.120000 }; // Ubicación de Mijail (origen)
+
+            // Coordenadas de destino (puedes ajustar según las direcciones de destino)
+            const destination = { lat: -16.490000, lng: -68.115000 };
+
+            // Crear marcadores para Aidisa y Mijail
+            const markerAidisa = new google.maps.Marker({
+                position: aidisaStart,
+                map: map,
+                title: 'Aidisa - Origen'
+            });
+
+            const markerMijail = new google.maps.Marker({
+                position: mijailStart,
+                map: map,
+                title: 'Mijail - Origen'
+            });
+
+            const markerDestination = new google.maps.Marker({
+                position: destination,
+                map: map,
+                title: 'Destino'
+            });
+
+            // Crear el servicio de direcciones para trazar rutas
+            const directionsService = new google.maps.DirectionsService();
+            const directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map
+            });
+
+            // Función para trazar la ruta desde el origen hasta el destino
+            function calculateAndDisplayRoute(startLocation) {
+                directionsService.route({
+                    origin: startLocation,
+                    destination: destination,
+                    travelMode: google.maps.TravelMode.DRIVING
+                }, (response, status) => {
+                    if (status === 'OK') {
+                        directionsRenderer.setDirections(response);
+                    } else {
+                        alert('No se pudo calcular la ruta: ' + status);
+                    }
+                });
+            }
+
+            // Trazar rutas para Aidisa y Mijail
+            calculateAndDisplayRoute(aidisaStart);
+            calculateAndDisplayRoute(mijailStart);
         }
     </script>
 

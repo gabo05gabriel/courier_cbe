@@ -4,6 +4,7 @@ from .models import Usuario
 from .forms import UsuarioForm, LoginForm
 from django.contrib import messages
 from envios.models import Envio, Entrega
+import json
 
 # Vista para listar los usuarios
 def lista_usuarios(request):
