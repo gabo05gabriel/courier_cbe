@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <style>
-        #map {
+        #map-origen, #map-destino {
             height: 400px;
             width: 100%;
             margin-top: 20px;
@@ -30,7 +30,7 @@
         <!-- Paso 1: Selección de Origen -->
         <div id="origen-section">
             <h2>Seleccionar ubicación de ORIGEN</h2>
-            <div id="map-origen" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+            <div id="map-origen"></div>
             <input type="hidden" name="latitud_origen" id="id_latitud_origen">
             <input type="hidden" name="longitud_origen" id="id_longitud_origen">
             <button type="button" id="btn-siguiente">➡ Siguiente</button>
@@ -39,7 +39,7 @@
         <!-- Paso 2: Selección de Destino -->
         <div id="destino-section" class="hidden">
             <h2>Seleccionar ubicación de DESTINO</h2>
-            <div id="map-destino" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+            <div id="map-destino"></div>
             <input type="hidden" name="latitud_destino" id="id_latitud_destino">
             <input type="hidden" name="longitud_destino" id="id_longitud_destino">
             
@@ -96,9 +96,11 @@
                     alert("Por favor selecciona primero el punto de ORIGEN moviendo el marcador.");
                     return;
                 }
+                // Mueve al siguiente paso: mapa de destino
                 document.getElementById("origen-section").classList.add("hidden");
                 document.getElementById("destino-section").classList.remove("hidden");
                 google.maps.event.trigger(destinoMap, "resize"); // refresca el mapa
+                destinoMap.setCenter(origenMarker.getPosition()); // Centra el mapa de destino en el origen
             });
         }
     </script>

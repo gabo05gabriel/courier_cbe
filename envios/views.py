@@ -18,7 +18,7 @@ def obtener_coordenadas(direccion):
 
 # Vista para listar los envíos
 def lista_envios(request):
-    envios = Envio.objects.all()  # Obtener todos los envíos de la base de datos
+    envios = Envio.objects.all()  # Asegúrate de que no haya un filtro que limite los envíos
     return render(request, 'envios/lista_envios.html', {'envios': envios})
 
 # Vista para crear un nuevo envío
@@ -162,17 +162,17 @@ def ver_entrega(request, entrega_id):
 
 # Vista para registrar una entrega
 def registrar_entrega(request, envio_id):
-    envio = Envio.objects.get(id=envio_id)
+    envio = Envio.objects.get(id=envio_id)  # Get the 'envio' object by ID
 
     if request.method == "POST":
-        form = EntregaForm(request.POST, request.FILES)  # Usar request.FILES para los archivos
+        form = EntregaForm(request.POST, request.FILES, envio=envio)  # Pass the envio object to the form
         if form.is_valid():
             entrega = form.save(commit=False)
-            entrega.envio = envio
+            entrega.envio = envio  # Assign the 'envio' to the entrega
             entrega.save()
-            return redirect('ver_envio', envio_id=envio.id)
+            return redirect('ver_envio', envio_id=envio.id)  # Redirect to 'ver_envio' after saving
     else:
-        form = EntregaForm()
+        form = EntregaForm(envio=envio)  # Pass the envio object to the form
 
     return render(request, 'envios/registrar_entrega.html', {'form': form, 'envio': envio})
 # Vista para editar una entrega

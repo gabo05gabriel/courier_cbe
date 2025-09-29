@@ -22,19 +22,13 @@
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <!-- Mostrar los campos del formulario, incluyendo los campos de foto y firma -->
+            <!-- Mostrar los campos del formulario -->
             {{ form.as_p }}
 
-            <!-- Campo para seleccionar nueva firma -->
+            <!-- Campo para seleccionar nueva firma (opcional) -->
             <div class="form-group">
                 <label for="firma">Nueva Firma (Dejar en blanco si no se desea cambiar)</label>
                 <input type="file" name="firma" id="firma" class="form-control">
-            </div>
-
-            <!-- Campo para seleccionar nueva foto -->
-            <div class="form-group">
-                <label for="foto">Nueva Foto de Entrega (Dejar en blanco si no se desea cambiar)</label>
-                <input type="file" name="foto" id="foto" class="form-control">
             </div>
 
             <!-- Botón para actualizar -->
@@ -44,22 +38,13 @@
         <br>
         <a href="{% url 'ver_entrega' entrega.id %}" class="btn cancel-btn">Cancelar</a>
 
-        <!-- Mostrar las imágenes de la firma y foto si existen -->
+        <!-- Mostrar la firma si existe -->
         <div class="firma">
             <h2>Firma de entrega</h2>
             {% if entrega.firma %}
                 <img src="{{ entrega.firma.url }}" alt="Firma de entrega" class="firma-img" style="max-width: 300px; height: auto;">
             {% else %}
                 <p>No se proporcionó firma.</p>
-            {% endif %}
-        </div>
-
-        <div class="foto">
-            <h2>Foto de entrega</h2>
-            {% if entrega.foto %}
-                <img src="{{ entrega.foto.url }}" alt="Foto de entrega" class="foto-img" style="max-width: 300px; height: auto;">
-            {% else %}
-                <p>No se proporcionó foto de entrega.</p>
             {% endif %}
         </div>
     </div>

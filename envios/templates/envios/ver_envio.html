@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles del Envío</title>
+    <title>Detalles del Sobre</title>
 
     <!-- Archivos CSS -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
@@ -68,16 +68,40 @@
     {% include 'includes/navbar.html' %}
 
     <div class="container">
-        <h1>Detalles del Envío</h1>
+        <h1>Detalles del Sobre</h1>
 
         <div class="details">
+            <p><strong>Remitente:</strong> {{ envio.remitente_nombre }}</p>
+            <p><strong>Teléfono del Remitente:</strong> {{ envio.remitente_telefono }}</p>
+
             <p><strong>Destinatario:</strong> {{ envio.destinatario_nombre }}</p>
-            <p><strong>Teléfono:</strong> {{ envio.destinatario_telefono }}</p>
+            <p><strong>Teléfono del Destinatario:</strong> {{ envio.destinatario_telefono }}</p>
+
             <p><strong>Dirección de Origen:</strong> {{ envio.origen_direccion }}</p>
             <p><strong>Dirección de Destino:</strong> {{ envio.destino_direccion }}</p>
+
             <p><strong>Peso:</strong> {{ envio.peso }} kg</p>
-            <p><strong>Estado:</strong> {{ envio.estado }}</p>
             <p><strong>Tipo de Servicio:</strong> {{ envio.tipo_servicio }}</p>
+            <p><strong>Estado:</strong> {{ envio.estado }}</p>
+            <p><strong>Observaciones:</strong> {{ envio.observaciones|default:"(Sin observaciones)" }}</p>
+            <p><strong>Ruta ID:</strong> {{ envio.ruta_id|default:"(No asignado)" }}</p>
+
+            <p><strong>Latitud de Origen:</strong> {{ envio.latitud_origen }}</p>
+            <p><strong>Longitud de Origen:</strong> {{ envio.longitud_origen }}</p>
+            <p><strong>Latitud de Destino:</strong> {{ envio.latitud_destino }}</p>
+            <p><strong>Longitud de Destino:</strong> {{ envio.longitud_destino }}</p>
+
+            <p><strong>Monto de Pago:</strong> {{ envio.monto_pago }} Bs</p>
+            <p><strong>Tipo de Pago:</strong> {{ envio.tipo_pago }}</p>
+
+            <p><strong>Mensajero:</strong>
+                {% if envio.mensajero %}
+                    {{ envio.mensajero.nombre }}
+                {% else %}
+                    No asignado
+                {% endif %}
+            </p>
+
             <p><strong>Creado en:</strong> {{ envio.creado_en|date:"d/m/Y H:i" }}</p>
         </div>
 
@@ -90,7 +114,7 @@
             </a>
         </div>
 
-        <a href="{% url 'lista_envios' %}" class="volver">⬅ Volver a la lista de envíos</a>
+        <a href="{% url 'lista_envios' %}" class="volver">⬅ Volver a la lista de sobres</a>
     </div>
 
     <!-- Script del mapa -->

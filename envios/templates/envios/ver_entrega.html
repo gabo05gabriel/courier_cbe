@@ -23,6 +23,7 @@
             <p><strong>Mensajero:</strong> {{ entrega.mensajero.nombre }} {{ entrega.mensajero.apellido }}</p>
             <p><strong>Fecha de entrega:</strong> {{ entrega.fecha_entrega }}</p>
             <p><strong>Estado:</strong> {{ entrega.estado }}</p>
+            <p><strong>Pagado:</strong> {% if entrega.pagado %} Sí {% else %} No {% endif %}</p> <!-- Mostrar estado de pago -->
         </div>
 
         <div class="firma">
@@ -33,16 +34,7 @@
                 <p>No se proporcionó firma.</p>
             {% endif %}
         </div>
-
-        <div class="foto">
-            <h2>Foto de entrega</h2>
-            {% if entrega.foto %}
-                <img src="{{ entrega.foto.url }}" alt="Foto de entrega" class="foto-img" style="max-width: 300px; height: auto;">
-            {% else %}
-                <p>No se proporcionó foto de entrega.</p>
-            {% endif %}
-        </div>
-
+        
         <div class="actions">
             <a href="{% url 'lista_entregas' %}" class="btn">Volver a la lista de entregas</a>
         </div>
