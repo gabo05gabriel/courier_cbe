@@ -62,3 +62,38 @@ def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None
     except Exception:
         return (None, None, None)
 
+def get_polyline_from_ordered_coords(coords, api_key):
+    """
+    Dibuja una ruta en el orden exacto de coords usando Directions API.
+    coords: [(lat, lng), ...] en el orden de la ruta
+    Retorna: polyline, distancia (m), duración (min)
+    """
+    if not api_key or len(coords) < 2:
+        return None, None, None
+
+    origin = f"{coords[0][0]},{coords[0][1]}"
+    destination = f"{coords[-1][0]},{coords[-1][1]}"
+    waypoints = [f"{lat},{lng}" for lat, lng in coords[1:-1]]
+
+    params = {
+        "origin": origin,
+        "destination": destination,
+        "key": api_key,
+        "mode": "driving",
+        "waypoints": "|".join(waypoints) if waypoints else None
+    }
+    params = {k: v for k, v in params.items() if v is not None}
+
+    try:
+        r = requests.get(DIRECTIONS_URL, params=params, timeout=10).json()
+        if r.get("status") != "OK":
+            return None, None, None
+
+        route = r["routes"][0]
+        legs = route["legs"]
+        dur = sum(leg["duration"]["value"] for leg in legs) // 60  # minutos
+        dist = sum(leg["distance"]["value"] for leg in legs)       # metros
+        polyline = route.get("overview_polyline", {}).get("points")
+        return polyline, dist, dur
+    except Exception:
+        return None, None, None

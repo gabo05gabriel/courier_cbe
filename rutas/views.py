@@ -6,10 +6,13 @@ from django.conf import settings
 from .models import Ruta
 from usuarios.models import Usuario, PerfilMensajero
 from envios.models import Envio
-from .services.google_maps import get_route_metrics, geocode_address
+from .services.google_maps import (
+    get_route_metrics,
+    geocode_address,
+    get_polyline_from_ordered_coords
+)
 
 import json
-import requests
 import numpy as np
 
 from .routing import (
@@ -17,39 +20,6 @@ from .routing import (
     load_delay_model,
     build_time_matrix_with_google
 )
-
-DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json"
-
-
-# ============================
-# Servicio: Google Directions con waypoints
-# ============================
-def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None):
-    api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
-    if not api_key:
-        return (None, None, None)
-
-    params = {
-        "origin": f"{origin_lat},{origin_lng}",
-        "destination": f"{dest_lat},{dest_lng}",
-        "key": api_key,
-        "mode": "driving"
-    }
-    if waypoints:
-        params["waypoints"] = "|".join(waypoints)
-
-    r = requests.get(DIRECTIONS_URL, params=params, timeout=10)
-    data = r.json()
-    if data.get("status") != "OK":
-        return (None, None, None)
-
-    route = data["routes"][0]
-    legs = route["legs"]
-
-    duration_sec = sum(leg["duration"]["value"] for leg in legs)
-    distance_m = sum(leg["distance"]["value"] for leg in legs)
-    polyline = route.get("overview_polyline", {}).get("points")
-    return (int(duration_sec // 60), int(distance_m), polyline)
 
 
 # ============================
@@ -64,7 +34,8 @@ def lista_rutas(request):
     sobres = []
 
     if mensajero_id:
-        sobres_qs = Envio.objects.filter(mensajero_id=mensajero_id)
+        # 🔎 Excluir sobres ya entregados
+        sobres_qs = Envio.objects.filter(mensajero_id=mensajero_id).exclude(estado="Entregado")
     else:
         sobres_qs = Envio.objects.none()
 
@@ -192,8 +163,29 @@ def optimizar_rutas(request, mensajero_id):
         delay_model=delay_model
     )
 
-    poly_algo, dist_algo, dur_algo = "", None, algo["end_time_min"]
+    # Generar polyline/distancia usando el orden calculado
+    ordered_coords = [origen_mensajero] + [(s["lat"], s["lng"]) for s in algo["ordered_stops"]]
+    poly_algo, dist_algo, dur_algo = get_polyline_from_ordered_coords(
+        ordered_coords, settings.GOOGLE_MAPS_API_KEY
+    )
 
+    # ✅ RUTA REAL (ficticia zona Sur La Paz)
+    ruta_real_coords = [
+        (-16.492068944491795, -68.12215947940508),
+        (-16.5014610925558, -68.11626541426007),
+        (-16.504654052425867, -68.12090028480469),
+        (-16.504335835306513, -68.13151440441496),
+        (-16.526217571488573, -68.10300852157029),
+        (-16.53190336215589, -68.08719283904894),
+        (-16.541379307367098, -68.07777874214173),
+        (-16.543777573605976, -68.06178499215338),
+    ]
+
+    poly_real, dist_real, dur_real = get_polyline_from_ordered_coords(
+        ruta_real_coords, settings.GOOGLE_MAPS_API_KEY
+    )
+
+    # Guardar rutas en BD
     with transaction.atomic():
         for e in envios:
             Ruta.objects.get_or_create(
@@ -215,12 +207,12 @@ def optimizar_rutas(request, mensajero_id):
         "ruta_algo": {
             "polyline": poly_algo,
             "duracion": dur_algo,
-            "distancia": dist_algo
+            "distancia": round(dist_algo/1000, 2) if dist_algo else None
         },
         "ruta_real": {
-            "polyline": "",
-            "duracion": None,
-            "distancia": None
+            "polyline": poly_real,
+            "duracion": dur_real,
+            "distancia": round(dist_real/1000, 2) if dist_real else None
         },
         "puntos": json.dumps(puntos_json, ensure_ascii=False),
         "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,

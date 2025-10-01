@@ -33,7 +33,9 @@ def load_delay_model(filename: str):
     Carga el modelo joblib desde rutas/models_ai/
     """
     try:
-        path = os.path.join(settings.BASE_DIR, "rutas", "models_ai", filename)
+        # Ruta robusta: siempre busca relativo a la app `rutas`
+        path = os.path.join(os.path.dirname(__file__), "models_ai", filename)
+        print(f"[DEBUG] Intentando cargar modelo desde: {path}")
         return load(path)
     except Exception as e:
         print(f"[WARNING] No se pudo cargar el modelo {filename}: {e}")
@@ -42,14 +44,29 @@ def load_delay_model(filename: str):
 
 def score_priority(model, feature_rows: List[Dict]) -> List[float]:
     """
-    Usa el árbol de decisión para estimar probabilidad de retraso
-    feature_rows: lista de dicts con características de cada parada
+    Usa el árbol de decisión para estimar probabilidad de retraso.
+    Convierte lista de dicts en matriz numérica.
     """
     if model is None:
         return [0.5] * len(feature_rows)  # prioridad media si no hay modelo
+
     try:
-        proba = model.predict_proba(feature_rows)
-        return proba[:, 1].tolist() if proba.ndim == 2 else model.predict(feature_rows).tolist()
+        # Convertir lista de dicts en matriz numérica
+        X = []
+        for f in feature_rows:
+            zona = f.get("zona", 0)
+
+            # Codificación simple de tipo_servicio
+            tipo = f.get("tipo_servicio", "Estandar")
+            tipo_val = 0 if str(tipo).lower().startswith("e") else 1  # 0=Estandar, 1=Express
+
+            X.append([zona, tipo_val])
+
+        X = np.array(X)
+
+        proba = model.predict_proba(X)
+        return proba[:, 1].tolist() if proba.ndim == 2 else model.predict(X).tolist()
+
     except Exception as e:
         print(f"[WARNING] Fallo al predecir prioridad: {e}")
         return [0.5] * len(feature_rows)
@@ -144,7 +161,7 @@ def compute_algorithmic_route(
     pts = [(s["lat"], s["lng"]) for s in stops]
     labels = kmeans_cluster(pts) if len(stops) >= 3 else np.zeros(len(stops), dtype=int)
 
-    # 2) Features para prioridad (muy básicas aquí)
+    # 2) Features para prioridad
     features = [
         {"zona": int(labels[i]), "tipo_servicio": s.get("tipo_servicio", "Estandar")}
         for i, s in enumerate(stops)
@@ -163,6 +180,7 @@ def compute_algorithmic_route(
 
     return {
         "order_indices": route,
-        "ordered_stops": [stops[i - 1] for i in route[1:]],  # -1 porque 0=origen
+        # Saltamos el 0 porque es el origen
+        "ordered_stops": [stops[i - 1] for i in route[1:]] if len(route) > 1 else [],
         "end_time_min": total_time
     }
