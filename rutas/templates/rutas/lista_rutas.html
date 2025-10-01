@@ -5,99 +5,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles de la Ruta</title>
+    <title>Sobres por Mensajero</title>
     <!-- Enlazar los archivos CSS -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
     <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        #map { height: 400px; width: 100%; margin-top: 30px; }
+        .btn-optimizar {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: green;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+        .btn-optimizar:hover {
+            background: darkgreen;
+        }
+    </style>
 </head>
 <body>
-    <!-- Incluir el navbar -->
+
+    <!-- Navbar global -->
     {% include 'includes/navbar.html' %}
 
-    <div class="container">
-        <h1>Detalles de la Ruta</h1>
+    <h1>Lista de Sobres por Mensajero</h1>
 
-        
+    <!-- Formulario de selección -->
+    <form method="POST">
+        {% csrf_token %}
+        <label for="mensajero">Seleccionar Mensajero:</label>
+        <select name="mensajero_id" id="mensajero">
+            <option value="">-- Selecciona un mensajero --</option>
+            {% for mensajero in mensajeros %}
+                <option value="{{ mensajero.id }}" {% if mensajero.id|stringformat:"s" == request.POST.mensajero_id %}selected{% endif %}>
+                    {{ mensajero.nombre }}
+                </option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filtrar</button>
+    </form>
 
-        <!-- Enlace directo a Google Maps -->
-        <h2>Ubicación de Origen y Destino</h2>
-        <a href="https://www.google.com/maps/dir/?api=1&origin={{ ruta.origen_direccion }}&destination={{ ruta.destino_direccion }}" target="_blank">
-            Ver ruta en Google Maps
-        </a>
+    <!-- ✅ Botón para optimizar rutas (solo aparece si hay mensajero seleccionado) -->
+    {% if request.POST.mensajero_id %}
+        <a href="{% url 'optimizar_rutas' request.POST.mensajero_id %}" class="btn-optimizar">🚀 Optimizar Rutas</a>
+    {% endif %}
 
-        <!-- Contenedor del mapa -->
-        <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+    <!-- Tabla de sobres -->
+    {% if sobres_json != "[]" %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Origen</th>
+                    <th>Destino</th>
+                    <th>Destinatario</th>
+                    <th>Teléfono</th>
+                    <th>Peso</th>
+                    <th>Tipo Servicio</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Observaciones</th>
+                    <th>Creado en</th>
+                    <th>Monto Pago</th>
+                    <th>Tipo Pago</th>
+                    <th>Remitente</th>
+                    <th>Teléfono Remitente</th>
+                </tr>
+            </thead>
+            <tbody id="sobres-table-body">
+                <!-- Se llena dinámicamente con JS -->
+            </tbody>
+        </table>
+    {% else %}
+        <p>No hay sobres para este mensajero.</p>
+    {% endif %}
 
-        <!-- Enlace para volver -->
-    </div>
+    <!-- Contenedor del mapa -->
+    <div id="map"></div>
+
+    <!-- Script con sobres -->
+    <script id="sobres-data" type="application/json">
+        {{ sobres_json|safe }}
+    </script>
 
     <!-- Script del mapa -->
     <script>
         function initMap() {
-            // Coordenadas predeterminadas de La Paz, Bolivia
-            const laPaz = { lat: -16.500000, lng: -68.119300 };
-
-            // Inicializar mapa centrado en La Paz
+            const laPaz = { lat: -16.5, lng: -68.1193 };
             const map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
                 center: laPaz
             });
 
-            // Coordenadas de Aidisa y Mijail
-            const aidisaStart = { lat: -16.500000, lng: -68.119300 }; // Ubicación de Aidisa (origen)
-            const mijailStart = { lat: -16.505000, lng: -68.120000 }; // Ubicación de Mijail (origen)
+            const sobres = JSON.parse(document.getElementById("sobres-data").textContent);
+            const tableBody = document.getElementById("sobres-table-body");
 
-            // Coordenadas de destino (puedes ajustar según las direcciones de destino)
-            const destination = { lat: -16.490000, lng: -68.115000 };
+            sobres.forEach(function(sobre) {
+                // Render tabla
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${sobre.id}</td>
+                    <td>${sobre.origen_direccion}</td>
+                    <td>${sobre.destino_direccion}</td>
+                    <td>${sobre.destinatario_nombre}</td>
+                    <td>${sobre.destinatario_telefono}</td>
+                    <td>${sobre.peso}</td>
+                    <td>${sobre.tipo_servicio}</td>
+                    <td>${sobre.tipo}</td>
+                    <td>${sobre.estado}</td>
+                    <td>${sobre.observaciones || ""}</td>
+                    <td>${sobre.creado_en}</td>
+                    <td>${sobre.monto_pago}</td>
+                    <td>${sobre.tipo_pago}</td>
+                    <td>${sobre.remitente_nombre}</td>
+                    <td>${sobre.remitente_telefono}</td>
+                `;
+                tableBody.appendChild(row);
 
-            // Crear marcadores para Aidisa y Mijail
-            const markerAidisa = new google.maps.Marker({
-                position: aidisaStart,
-                map: map,
-                title: 'Aidisa - Origen'
+                // Marcadores en el mapa según tipo
+                if (sobre.tipo === "Recojo" && sobre.origen && sobre.origen.lat && sobre.origen.lng) {
+                    new google.maps.Marker({
+                        position: sobre.origen,
+                        map: map,
+                        label: "R",
+                        title: "Recojo - Sobre " + sobre.id
+                    });
+                }
+
+                if (sobre.tipo === "Envío" && sobre.destino && sobre.destino.lat && sobre.destino.lng) {
+                    new google.maps.Marker({
+                        position: sobre.destino,
+                        map: map,
+                        label: "E",
+                        title: "Envío - Sobre " + sobre.id
+                    });
+                }
             });
 
-            const markerMijail = new google.maps.Marker({
-                position: mijailStart,
-                map: map,
-                title: 'Mijail - Origen'
-            });
-
-            const markerDestination = new google.maps.Marker({
-                position: destination,
-                map: map,
-                title: 'Destino'
-            });
-
-            // Crear el servicio de direcciones para trazar rutas
-            const directionsService = new google.maps.DirectionsService();
-            const directionsRenderer = new google.maps.DirectionsRenderer({
-                map: map
-            });
-
-            // Función para trazar la ruta desde el origen hasta el destino
-            function calculateAndDisplayRoute(startLocation) {
-                directionsService.route({
-                    origin: startLocation,
-                    destination: destination,
-                    travelMode: google.maps.TravelMode.DRIVING
-                }, (response, status) => {
-                    if (status === 'OK') {
-                        directionsRenderer.setDirections(response);
-                    } else {
-                        alert('No se pudo calcular la ruta: ' + status);
+            // Ajustar vista
+            if (sobres.length > 0) {
+                const bounds = new google.maps.LatLngBounds();
+                sobres.forEach(sobre => {
+                    if (sobre.tipo === "Recojo" && sobre.origen && sobre.origen.lat && sobre.origen.lng) {
+                        bounds.extend(sobre.origen);
+                    }
+                    if (sobre.tipo === "Envío" && sobre.destino && sobre.destino.lat && sobre.destino.lng) {
+                        bounds.extend(sobre.destino);
                     }
                 });
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds);
+                }
             }
-
-            // Trazar rutas para Aidisa y Mijail
-            calculateAndDisplayRoute(aidisaStart);
-            calculateAndDisplayRoute(mijailStart);
         }
     </script>
 
-    <!-- Cargar Google Maps API -->
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script> 
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+
 </body>
 </html>

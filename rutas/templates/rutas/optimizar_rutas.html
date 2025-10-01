@@ -1,0 +1,148 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimización de Rutas</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: center; }
+        th { background-color: #28a745; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        #map { height: 500px; width: 100%; margin-top: 30px; border-radius: 10px; }
+        .mensaje { margin-top: 15px; color: red; font-weight: bold; }
+        a.volver { display: inline-block; margin-top: 20px; text-decoration: none; color: #007bff; }
+        a.volver:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <h1>Optimización y Predicción de Rutas</h1>
+
+    <p><strong>Precisión del modelo (Árbol de Decisión):</strong> {{ accuracy|default:"N/A" }}</p>
+
+    {% if mensaje %}
+        <p class="mensaje">{{ mensaje }}</p>
+    {% endif %}
+
+    {% if rutas %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Ruta</th>
+                    <th>Latitud Inicio</th>
+                    <th>Longitud Inicio</th>
+                    <th>Latitud Fin</th>
+                    <th>Longitud Fin</th>
+                    <th>Duración Estimada</th>
+                    <th>Duración Real</th>
+                    <th>Zona Asignada (KMeans)</th>
+                    <th>Retraso Estimado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ruta in rutas %}
+                    <tr>
+                        <td>{{ ruta.id }}</td>
+                        <td>{{ ruta.latitud_inicio }}</td>
+                        <td>{{ ruta.longitud_inicio }}</td>
+                        <td>{{ ruta.latitud_fin }}</td>
+                        <td>{{ ruta.longitud_fin }}</td>
+                        <td>{{ ruta.duracion_estimada }}</td>
+                        <td>{{ ruta.duracion_real }}</td>
+                        <td>{{ ruta.zona_asignada }}</td>
+                        <td>{{ ruta.retraso_estimado|default:"-" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Contenedor del mapa -->
+        <div id="map"></div>
+
+        <!-- Pasar rutas a JS -->
+        <script id="rutas-data" type="application/json">
+            {{ rutas|safe }}
+        </script>
+
+        <script>
+    function initMap() {
+        const rutas = JSON.parse(document.getElementById("rutas-data").textContent);
+        const map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 13,
+            center: { lat: -16.5, lng: -68.1193 },
+        });
+
+        const directionsService = new google.maps.DirectionsService();
+        const directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+
+        if (rutas.length > 0) {
+            const waypoints = [];
+
+            rutas.forEach(ruta => {
+                if (ruta.latitud_inicio && ruta.longitud_inicio) {
+                    waypoints.push({
+                        location: { lat: parseFloat(ruta.latitud_inicio), lng: parseFloat(ruta.longitud_inicio) },
+                        stopover: true
+                    });
+                }
+                if (ruta.latitud_fin && ruta.longitud_fin) {
+                    waypoints.push({
+                        location: { lat: parseFloat(ruta.latitud_fin), lng: parseFloat(ruta.longitud_fin) },
+                        stopover: true
+                    });
+                }
+            });
+
+            if (waypoints.length >= 2) {
+                const origin = waypoints[0].location;
+                const destination = waypoints[waypoints.length - 1].location;
+                const midWaypoints = waypoints.slice(1, -1);
+
+                directionsService.route(
+                    {
+                        origin: origin,
+                        destination: destination,
+                        waypoints: midWaypoints,
+                        optimizeWaypoints: true,
+                        travelMode: google.maps.TravelMode.DRIVING,
+                    },
+                    (response, status) => {
+                        if (status === "OK") {
+                            directionsRenderer.setDirections(response);
+                        } else {
+                            alert("Error en la generación de la ruta: " + status);
+                        }
+                    }
+                );
+            } else if (waypoints.length === 1) {
+                // Si solo hay un punto, centrar mapa con marcador
+                map.setCenter(waypoints[0].location);
+                new google.maps.Marker({
+                    position: waypoints[0].location,
+                    map: map,
+                    label: "P",
+                    title: "Único punto de la ruta"
+                });
+            }
+        }
+    }
+</script>
+
+        <!-- Google Maps API -->
+        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+    {% endif %}
+
+    <a href="{% url 'lista_rutas' %}" class="volver">← Volver a la lista de rutas</a>
+
+</body>
+</html>

@@ -9,12 +9,14 @@ gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
 
 # Función para obtener las coordenadas de una dirección
 def obtener_coordenadas(direccion):
-    geocode_result = gmaps.geocode(direccion)
+    direccion_completa = f"{direccion}, La Paz, Bolivia"
+    geocode_result = gmaps.geocode(direccion_completa)
     if geocode_result:
         latitud = geocode_result[0]['geometry']['location']['lat']
         longitud = geocode_result[0]['geometry']['location']['lng']
         return latitud, longitud
     return None, None
+
 
 # Vista para listar los envíos
 def lista_envios(request):
@@ -22,36 +24,29 @@ def lista_envios(request):
     return render(request, 'envios/lista_envios.html', {'envios': envios})
 
 # Vista para crear un nuevo envío
+# Vista para crear un nuevo envío
 def crear_envio(request):
     if request.method == 'POST':
         form = EnvioForm(request.POST)
         if form.is_valid():
-            # Obtener las coordenadas de origen y destino usando la API de Google Maps
-            origen = form.cleaned_data['origen_direccion']
-            destino = form.cleaned_data['destino_direccion']
-            lat_origen, lng_origen = obtener_coordenadas(origen)
-            lat_destino, lng_destino = obtener_coordenadas(destino)
-
-            # Guardar el nuevo envío con las coordenadas obtenidas
             envio = form.save(commit=False)
-            envio.latitud_origen = lat_origen
-            envio.longitud_origen = lng_origen
-            envio.latitud_destino = lat_destino
-            envio.longitud_destino = lng_destino
+
+            # Si vienen coordenadas en el formulario, las usamos
+            if request.POST.get("latitud_origen") and request.POST.get("longitud_origen"):
+                envio.latitud_origen = request.POST.get("latitud_origen")
+                envio.longitud_origen = request.POST.get("longitud_origen")
+
+            if request.POST.get("latitud_destino") and request.POST.get("longitud_destino"):
+                envio.latitud_destino = request.POST.get("latitud_destino")
+                envio.longitud_destino = request.POST.get("longitud_destino")
+
             envio.save()
 
-            # Guardar un historial del envío (evento creado)
-            HistorialEnvio.objects.create(
-                envio=envio,
-                tipo_evento='Creado',
-                ubicacion_latitud=lat_origen,
-                ubicacion_longitud=lng_origen
-            )
-
-            return redirect('lista_envios')  # Redirigir a la lista de envíos
+            return redirect('lista_envios')
     else:
         form = EnvioForm()
     return render(request, 'envios/crear_envio.html', {'form': form})
+
 
 # Vista para ver los detalles de un envío
 def ver_envio(request, envio_id):
@@ -59,37 +54,49 @@ def ver_envio(request, envio_id):
     return render(request, 'envios/ver_envio.html', {'envio': envio})
 
 # Vista para editar un envío
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Envio, HistorialEnvio
+from .forms import EnvioForm
+
 def editar_envio(request, envio_id):
-    envio = get_object_or_404(Envio, id=envio_id)  # Obtener el envío por su ID
+    envio = get_object_or_404(Envio, id=envio_id)
+
     if request.method == 'POST':
         form = EnvioForm(request.POST, instance=envio)
         if form.is_valid():
-            # Obtener las coordenadas de origen y destino usando la API de Google Maps
-            origen = form.cleaned_data['origen_direccion']
-            destino = form.cleaned_data['destino_direccion']
-            lat_origen, lng_origen = obtener_coordenadas(origen)
-            lat_destino, lng_destino = obtener_coordenadas(destino)
-
-            # Guardar el envío editado con las nuevas coordenadas
             envio = form.save(commit=False)
-            envio.latitud_origen = lat_origen
-            envio.longitud_origen = lng_origen
-            envio.latitud_destino = lat_destino
-            envio.longitud_destino = lng_destino
+
+            lat_origen = request.POST.get("latitud_origen")
+            lng_origen = request.POST.get("longitud_origen")
+            lat_destino = request.POST.get("latitud_destino")
+            lng_destino = request.POST.get("longitud_destino")
+
+            if lat_origen and lng_origen:
+                envio.latitud_origen = float(lat_origen)
+                envio.longitud_origen = float(lng_origen)
+
+            if lat_destino and lng_destino:
+                envio.latitud_destino = float(lat_destino)
+                envio.longitud_destino = float(lng_destino)
+
             envio.save()
 
-            # Agregar historial de evento de actualización
             HistorialEnvio.objects.create(
                 envio=envio,
                 tipo_evento='Actualizado',
-                ubicacion_latitud=lat_origen,
-                ubicacion_longitud=lng_origen
+                ubicacion_latitud=envio.latitud_origen,
+                ubicacion_longitud=envio.longitud_origen
             )
 
-            return redirect('lista_envios')  # Redirigir a la lista de envíos
+            return redirect('lista_envios')
     else:
         form = EnvioForm(instance=envio)
-    return render(request, 'envios/editar_envio.html', {'form': form})
+
+    return render(request, 'envios/editar_envio.html', {
+        'form': form,
+        'envio': envio
+    })
+
 
 # Vista para eliminar un envío
 def eliminar_envio(request, envio_id):
