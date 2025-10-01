@@ -1,13 +1,46 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponseBadRequest
+from django.db import transaction
+from django.conf import settings
 from .models import Ruta
 from usuarios.models import Usuario, PerfilMensajero
 from envios.models import Envio
 
 import json
-import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.model_selection import train_test_split
-from sklearn.tree import DecisionTreeClassifier
+import requests
+
+DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json"
+
+
+# ============================
+# Servicio: Google Directions con waypoints
+# ============================
+def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None):
+    api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
+    if not api_key:
+        return (None, None, None)
+
+    params = {
+        "origin": f"{origin_lat},{origin_lng}",
+        "destination": f"{dest_lat},{dest_lng}",
+        "key": api_key,
+        "mode": "driving"
+    }
+    if waypoints:
+        params["waypoints"] = "|".join(waypoints)
+
+    r = requests.get(DIRECTIONS_URL, params=params, timeout=10)
+    data = r.json()
+    if data.get("status") != "OK":
+        return (None, None, None)
+
+    route = data["routes"][0]
+    legs = route["legs"]
+
+    duration_sec = sum(leg["duration"]["value"] for leg in legs)
+    distance_m = sum(leg["distance"]["value"] for leg in legs)
+    polyline = route.get("overview_polyline", {}).get("points")
+    return (int(duration_sec // 60), int(distance_m), polyline)
 
 
 # ============================
@@ -74,85 +107,97 @@ def lista_rutas(request):
 # ============================
 # Vista: Optimizar y predecir rutas
 # ============================
-def optimizar_y_predecir_view(request, mensajero_id):
-    # ✅ Verificar que el mensajero existe
-    mensajero = get_object_or_404(Usuario, id=mensajero_id)
+def optimizar_rutas(request, mensajero_id):
+    if request.method != "GET":
+        return HttpResponseBadRequest("Método no soportado")
 
-    # ✅ Filtrar rutas solo de este mensajero
-    rutas_data = Ruta.objects.filter(mensajero_id=mensajero_id).values(
-        'id',
-        'latitud_inicio', 'longitud_inicio',
-        'latitud_fin', 'longitud_fin',
-        'duracion_estimada', 'duracion_real'
+    mensajero = get_object_or_404(Usuario, pk=mensajero_id)
+
+    # 🔎 Traer solo envíos pendientes de ese mensajero
+    envios = Envio.objects.filter(mensajero=mensajero, estado="Pendiente")[:50]
+
+    if not envios:
+        return redirect("lista_rutas")
+
+    # Lista de puntos (recojos y entregas)
+    puntos_json = []
+    waypoints = []
+    for envio in envios:
+        if envio.latitud_origen and envio.longitud_origen:
+            puntos_json.append({
+                "id": envio.id,
+                "tipo": "Recojo",
+                "lat": float(envio.latitud_origen),
+                "lng": float(envio.longitud_origen),
+                "direccion": envio.origen_direccion
+            })
+            waypoints.append(f"{envio.latitud_origen},{envio.longitud_origen}")
+        if envio.latitud_destino and envio.longitud_destino:
+            puntos_json.append({
+                "id": envio.id,
+                "tipo": "Entrega",
+                "lat": float(envio.latitud_destino),
+                "lng": float(envio.longitud_destino),
+                "direccion": envio.destino_direccion
+            })
+            waypoints.append(f"{envio.latitud_destino},{envio.longitud_destino}")
+
+    if len(waypoints) < 2:
+        return redirect("lista_rutas")
+
+    # ========= GOOGLE (con waypoints) =========
+    origin = waypoints[0]
+    destination = waypoints[-1]
+    stops = waypoints[1:-1]
+
+    dur_google, dist_google, poly_google = get_route_metrics(
+        *origin.split(","), *destination.split(","), waypoints=stops
     )
 
-    df = pd.DataFrame(rutas_data)
+    # ========= ALGORITMO (heurística básica) =========
+    ruta_orden = list(envios)  # aquí podrías ordenar con tu heurística
+    poly_algo = ""  # TODO: generar polyline para algoritmo
+    dist_algo = 0
+    dur_algo = 0
 
-    if df.empty:
-        return render(request, "rutas/optimizar_rutas.html", {
-            "mensajero": mensajero,
-            "rutas": [],
-            "accuracy": 0,
-            "mensaje": f"⚠ El mensajero {mensajero.nombre} no tiene rutas registradas."
-        })
+    with transaction.atomic():
+        for e in ruta_orden:
+            r, _ = Ruta.objects.get_or_create(
+                mensajero=mensajero, envio=e,
+                defaults=dict(
+                    latitud_inicio=e.latitud_origen,
+                    longitud_inicio=e.longitud_origen,
+                    latitud_fin=e.latitud_destino,
+                    longitud_fin=e.longitud_destino
+                )
+            )
+            r.save()
 
-    # ================================
-    # 1. Clustering con KMeans
-    # ================================
-    df = df.dropna(subset=['latitud_inicio', 'longitud_inicio', 'latitud_fin', 'longitud_fin'])
-    coordenadas = df[['latitud_inicio', 'longitud_inicio', 'latitud_fin', 'longitud_fin']].astype(float).values
+    # ========= REAL (desde móvil, aún vacío) =========
+    poly_real = ""
+    dur_real = None
+    dist_real = None
 
-    if len(coordenadas) > 1:  # evitar error si hay solo una ruta
-        kmeans = KMeans(n_clusters=min(3, len(coordenadas)), random_state=42)
-        kmeans.fit(coordenadas)
-        df['zona_asignada'] = kmeans.labels_
-
-        # ✅ Guardar zona asignada en la DB
-        for idx, row in df.iterrows():
-            ruta = Ruta.objects.get(id=row['id'])
-            ruta.zona_asignada = row['zona_asignada']
-            ruta.save()
-
-    # ================================
-    # 2. Árbol de decisión para predecir retrasos
-    # ================================
-    df['duracion_estimada'] = df['duracion_estimada'].fillna(0)
-    df['duracion_real'] = df['duracion_real'].fillna(0)
-
-    X = df[['duracion_estimada', 'latitud_inicio', 'longitud_inicio', 'latitud_fin', 'longitud_fin']].astype(float)
-    y = (df['duracion_real'] > df['duracion_estimada']).astype(int)
-
-    if len(df) < 2 or y.nunique() == 1:
-        accuracy = 1.0
-    else:
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-        clf = DecisionTreeClassifier(random_state=42)
-        clf.fit(X_train, y_train)
-        accuracy = clf.score(X_test, y_test)
-
-        # ✅ Predecir retrasos en todas las rutas
-        for idx, row in df.iterrows():
-            X_new = [[
-                row['duracion_estimada'],
-                row['latitud_inicio'],
-                row['longitud_inicio'],
-                row['latitud_fin'],
-                row['longitud_fin']
-            ]]
-            pred = clf.predict(X_new)
-            ruta = Ruta.objects.get(id=row['id'])
-            ruta.retraso_estimado = "Retraso estimado" if pred[0] == 1 else "Entrega a tiempo"
-            ruta.save()
-
-    # ================================
-    # Renderizar resultados
-    # ================================
     return render(request, "rutas/optimizar_rutas.html", {
-        "mensajero": mensajero,
-        "rutas": df.to_dict(orient="records"),
-        "accuracy": accuracy,
-        "mensaje": f"✅ Optimización realizada para el mensajero {mensajero.nombre}"
+        "ruta_google": {
+            "polyline": poly_google,
+            "duracion": dur_google,
+            "distancia": round(dist_google/1000, 2) if dist_google else None
+        },
+        "ruta_algo": {
+            "polyline": poly_algo,
+            "duracion": dur_algo,
+            "distancia": dist_algo
+        },
+        "ruta_real": {
+            "polyline": poly_real,
+            "duracion": dur_real,
+            "distancia": dist_real
+        },
+        "puntos": json.dumps(puntos_json, ensure_ascii=False),
+        "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,
     })
+
 
 
 # ============================
