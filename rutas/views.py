@@ -47,7 +47,6 @@ def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None
 # Vista: Lista de sobres/rutas
 # ============================
 def lista_rutas(request):
-    # ✅ Solo traer usuarios que son mensajeros
     mensajeros = Usuario.objects.filter(
         id__in=PerfilMensajero.objects.values("usuario_id")
     )
@@ -55,13 +54,11 @@ def lista_rutas(request):
     mensajero_id = request.POST.get("mensajero_id")
     sobres = []
 
-    # ✅ Filtrar sobres según el mensajero seleccionado
     if mensajero_id:
         sobres_qs = Envio.objects.filter(mensajero_id=mensajero_id)
     else:
-        sobres_qs = Envio.objects.none()  # vacío si no hay selección
+        sobres_qs = Envio.objects.none()
 
-    # ✅ Convertir sobres válidos a JSON con TODOS los campos
     for envio in sobres_qs:
         sobres.append({
             "id": envio.id,
@@ -86,8 +83,6 @@ def lista_rutas(request):
             "mensajero_id": envio.mensajero_id,
             "remitente_nombre": getattr(envio, "remitente_nombre", None),
             "remitente_telefono": getattr(envio, "remitente_telefono", None),
-
-            # Datos para el mapa
             "origen": {
                 "lat": float(envio.latitud_origen) if envio.latitud_origen else None,
                 "lng": float(envio.longitud_origen) if envio.longitud_origen else None,
@@ -104,65 +99,91 @@ def lista_rutas(request):
     })
 
 
-# ============================
-# Vista: Optimizar y predecir rutas
-# ============================
 def optimizar_rutas(request, mensajero_id):
     if request.method != "GET":
         return HttpResponseBadRequest("Método no soportado")
 
     mensajero = get_object_or_404(Usuario, pk=mensajero_id)
+    perfil = get_object_or_404(PerfilMensajero, usuario=mensajero)
 
-    # 🔎 Traer solo envíos pendientes de ese mensajero
+    # 🔎 Envíos pendientes
     envios = Envio.objects.filter(mensajero=mensajero, estado="Pendiente")[:50]
-
     if not envios:
         return redirect("lista_rutas")
 
-    # Lista de puntos (recojos y entregas)
     puntos_json = []
     waypoints = []
-    for envio in envios:
-        if envio.latitud_origen and envio.longitud_origen:
-            puntos_json.append({
-                "id": envio.id,
-                "tipo": "Recojo",
-                "lat": float(envio.latitud_origen),
-                "lng": float(envio.longitud_origen),
-                "direccion": envio.origen_direccion
-            })
-            waypoints.append(f"{envio.latitud_origen},{envio.longitud_origen}")
-        if envio.latitud_destino and envio.longitud_destino:
-            puntos_json.append({
-                "id": envio.id,
-                "tipo": "Entrega",
-                "lat": float(envio.latitud_destino),
-                "lng": float(envio.longitud_destino),
-                "direccion": envio.destino_direccion
-            })
-            waypoints.append(f"{envio.latitud_destino},{envio.longitud_destino}")
 
-    if len(waypoints) < 2:
+    # ✅ Punto inicial: ubicación del mensajero
+    try:
+        origen_mensajero = f"{float(perfil.latitud)},{float(perfil.longitud)}"
+    except (TypeError, ValueError):
+        origen_mensajero = None
+
+    if origen_mensajero:
+        puntos_json.append({
+            "id": f"mensajero-{mensajero.id}",
+            "tipo": "Mensajero",
+            "lat": float(perfil.latitud),
+            "lng": float(perfil.longitud),
+            "direccion": "Ubicación inicial del mensajero"
+        })
+
+    # ✅ Agregar TODOS los puntos de los envíos (Recojo/Envío)
+    for envio in envios:
+        if envio.tipo == "Recojo" and envio.latitud_origen and envio.longitud_origen:
+            try:
+                lat, lng = float(envio.latitud_origen), float(envio.longitud_origen)
+                puntos_json.append({
+                    "id": envio.id,
+                    "tipo": "Recojo",
+                    "lat": lat,
+                    "lng": lng,
+                    "direccion": envio.origen_direccion
+                })
+                waypoints.append(f"{lat},{lng}")
+            except (TypeError, ValueError):
+                pass
+
+        elif envio.tipo == "Envío" and envio.latitud_destino and envio.longitud_destino:
+            try:
+                lat, lng = float(envio.latitud_destino), float(envio.longitud_destino)
+                puntos_json.append({
+                    "id": envio.id,
+                    "tipo": "Envío",
+                    "lat": lat,
+                    "lng": lng,
+                    "direccion": envio.destino_direccion
+                })
+                waypoints.append(f"{lat},{lng}")
+            except (TypeError, ValueError):
+                pass
+
+    # ✅ limpiar duplicados pero manteniendo el orden
+    waypoints = list(dict.fromkeys(waypoints))
+
+    if not origen_mensajero or len(waypoints) < 1:
         return redirect("lista_rutas")
 
-    # ========= GOOGLE (con waypoints) =========
-    origin = waypoints[0]
-    destination = waypoints[-1]
-    stops = waypoints[1:-1]
+    # ✅ Directions: mensajero como ORIGEN y todos los puntos como paradas
+    if len(waypoints) == 1:
+        destination = waypoints[0]
+        stops = []
+    else:
+        destination = waypoints[-1]
+        stops = waypoints[:-1]
 
     dur_google, dist_google, poly_google = get_route_metrics(
-        *origin.split(","), *destination.split(","), waypoints=stops
+        *origen_mensajero.split(","), *destination.split(","), waypoints=stops
     )
 
-    # ========= ALGORITMO (heurística básica) =========
-    ruta_orden = list(envios)  # aquí podrías ordenar con tu heurística
-    poly_algo = ""  # TODO: generar polyline para algoritmo
-    dist_algo = 0
-    dur_algo = 0
+    # ========= ALGORITMO (placeholder) =========
+    ruta_orden = list(envios)
+    poly_algo, dist_algo, dur_algo = "", 0, 0
 
     with transaction.atomic():
         for e in ruta_orden:
-            r, _ = Ruta.objects.get_or_create(
+            Ruta.objects.get_or_create(
                 mensajero=mensajero, envio=e,
                 defaults=dict(
                     latitud_inicio=e.latitud_origen,
@@ -171,12 +192,45 @@ def optimizar_rutas(request, mensajero_id):
                     longitud_fin=e.longitud_destino
                 )
             )
-            r.save()
 
-    # ========= REAL (desde móvil, aún vacío) =========
-    poly_real = ""
-    dur_real = None
-    dist_real = None
+    # ========= REAL (vacío) =========
+    poly_real, dur_real, dist_real = "", None, None
+
+    # ========= JSON espejo de lista_rutas =========
+    envios_json_data = []
+    for envio in envios:
+        envios_json_data.append({
+            "id": envio.id,
+            "origen_direccion": envio.origen_direccion,
+            "destino_direccion": envio.destino_direccion,
+            "destinatario_nombre": envio.destinatario_nombre,
+            "destinatario_telefono": envio.destinatario_telefono,
+            "peso": str(envio.peso) if getattr(envio, "peso", None) is not None else None,
+            "tipo_servicio": envio.tipo_servicio,
+            "estado": envio.estado,
+            "observaciones": envio.observaciones,
+            "creado_en": envio.creado_en.strftime("%Y-%m-%d %H:%M:%S") if getattr(envio, "creado_en", None) else None,
+            "ruta_id": envio.ruta_id,
+            "remitente_id": envio.remitente_id,
+            "latitud_destino": float(envio.latitud_destino) if getattr(envio, "latitud_destino", None) else None,
+            "latitud_origen": float(envio.latitud_origen) if getattr(envio, "latitud_origen", None) else None,
+            "longitud_destino": float(envio.longitud_destino) if getattr(envio, "longitud_destino", None) else None,
+            "longitud_origen": float(envio.longitud_origen) if getattr(envio, "longitud_origen", None) else None,
+            "monto_pago": str(envio.monto_pago) if getattr(envio, "monto_pago", None) else None,
+            "tipo": envio.tipo,
+            "tipo_pago": envio.tipo_pago,
+            "mensajero_id": envio.mensajero_id,
+            "remitente_nombre": getattr(envio, "remitente_nombre", None),
+            "remitente_telefono": getattr(envio, "remitente_telefono", None),
+            "origen": {
+                "lat": float(envio.latitud_origen) if getattr(envio, "latitud_origen", None) else None,
+                "lng": float(envio.longitud_origen) if getattr(envio, "longitud_origen", None) else None,
+            },
+            "destino": {
+                "lat": float(envio.latitud_destino) if getattr(envio, "latitud_destino", None) else None,
+                "lng": float(envio.longitud_destino) if getattr(envio, "longitud_destino", None) else None,
+            },
+        })
 
     return render(request, "rutas/optimizar_rutas.html", {
         "ruta_google": {
@@ -194,11 +248,10 @@ def optimizar_rutas(request, mensajero_id):
             "duracion": dur_real,
             "distancia": dist_real
         },
-        "puntos": json.dumps(puntos_json, ensure_ascii=False),
+        "puntos": json.dumps(puntos_json, ensure_ascii=False),   # ✅ incluye TODOS
+        "envios_json": json.dumps(envios_json_data, ensure_ascii=False),
         "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,
     })
-
-
 
 # ============================
 # Vista: Ver ruta específica

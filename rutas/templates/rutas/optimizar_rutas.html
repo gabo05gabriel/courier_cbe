@@ -41,6 +41,7 @@
     .blue { color: blue; font-weight: bold; }
     .red { color: red; font-weight: bold; }
     .green { color: green; font-weight: bold; }
+    .orange { color: orange; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -56,6 +57,9 @@
   <span class="blue">● Ruta Google Maps</span>
   <span class="red">● Ruta Algoritmo</span>
   <span class="green">● Ruta Real (mensajero)</span>
+  <span class="orange">M = Mensajero</span>
+  <span>R = Recojo</span>
+  <span>E = Envío</span>
 </div>
 
 <!-- Tabla comparativa -->
@@ -119,18 +123,33 @@ function initMap() {
   const data = JSON.parse(document.getElementById("rutas-data").textContent);
 
   // ==================
-  // 🔹 Mostrar puntos
+  // 🔹 Mostrar puntos (Mensajero, Recojo, Envío)
   // ==================
   if (data.puntos && data.puntos.length > 0) {
     data.puntos.forEach(p => {
-      let color = p.tipo === "Recojo" ? "blue" : "orange";
-      let label = p.tipo === "Recojo" ? "R" : "E";
-      new google.maps.Marker({
+      let markerOptions = {
         position: {lat: p.lat, lng: p.lng},
         map: map,
-        label: label,
-        title: `${p.tipo} - Envío ${p.id} (${p.direccion})`
-      });
+        title: `${p.tipo} - ${p.id} (${p.direccion || ''})`
+      };
+
+      if (p.tipo === "Mensajero") {
+        markerOptions.label = "M";
+        markerOptions.icon = {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: "orange",
+          fillOpacity: 1,
+          strokeColor: "white",
+          strokeWeight: 2
+        };
+      } else if (p.tipo === "Recojo") {
+        markerOptions.label = "R";
+      } else if (p.tipo === "Envío") {
+        markerOptions.label = "E";
+      }
+
+      new google.maps.Marker(markerOptions);
     });
   }
 
@@ -221,7 +240,7 @@ function initMap() {
 </script>
 
 <!-- Google Maps API -->
-        <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
 
 </body>
 </html>

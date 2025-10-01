@@ -81,6 +81,7 @@
             <p><strong>Dirección de Destino:</strong> {{ envio.destino_direccion }}</p>
 
             <p><strong>Peso:</strong> {{ envio.peso }} kg</p>
+            <p><strong>Tipo de Envío:</strong> {{ envio.tipo }}</p> <!-- 👈 Nuevo campo -->
             <p><strong>Tipo de Servicio:</strong> {{ envio.tipo_servicio }}</p>
             <p><strong>Estado:</strong> {{ envio.estado }}</p>
             <p><strong>Observaciones:</strong> {{ envio.observaciones|default:"(Sin observaciones)" }}</p>

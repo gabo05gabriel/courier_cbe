@@ -19,12 +19,14 @@
         <h1>Detalles de la Entrega</h1>
 
         <div class="details">
-            <p><strong>Envio:</strong> {{ entrega.envio.id }} - {{ entrega.envio.destinatario_nombre }}</p>
-            <p><strong>Mensajero:</strong> {{ entrega.mensajero.nombre }} {{ entrega.mensajero.apellido }}</p>
-            <p><strong>Fecha de entrega:</strong> {{ entrega.fecha_entrega }}</p>
-            <p><strong>Estado:</strong> {{ entrega.estado }}</p>
-            <p><strong>Pagado:</strong> {% if entrega.pagado %} Sí {% else %} No {% endif %}</p> <!-- Mostrar estado de pago -->
-        </div>
+    <p><strong>Envio:</strong> {{ entrega.envio.id }} - {{ entrega.envio.destinatario_nombre }}</p>
+    <p><strong>Tipo de envío:</strong> {{ entrega.envio.tipo }}</p> <!-- 👈 Nuevo campo -->
+    <p><strong>Mensajero:</strong> {{ entrega.mensajero.nombre }} {{ entrega.mensajero.apellido }}</p>
+    <p><strong>Fecha de entrega:</strong> {{ entrega.fecha_entrega }}</p>
+    <p><strong>Estado:</strong> {{ entrega.estado }}</p>
+    <p><strong>Pagado:</strong> {% if entrega.pagado %} Sí {% else %} No {% endif %}</p>
+</div>
+
 
         <div class="firma">
             <h2>Firma de entrega</h2>
