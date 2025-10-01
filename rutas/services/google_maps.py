@@ -30,9 +30,9 @@ def geocode_address(address: str):
         return (None, None)
 
 
-def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng):
+def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng, waypoints=None):
     """
-    Obtiene distancia, duración y polyline de Directions API.
+    Obtiene distancia, duración y polyline de Directions API con waypoints opcionales.
     """
     api_key = getattr(settings, "GOOGLE_MAPS_API_KEY", None)
     if not api_key:
@@ -44,6 +44,9 @@ def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng):
         "key": api_key,
         "mode": "driving"
     }
+    if waypoints:
+        params["waypoints"] = "|".join(waypoints)
+
     try:
         r = requests.get(DIRECTIONS_URL, params=params, timeout=10)
         data = r.json()
@@ -51,10 +54,11 @@ def get_route_metrics(origin_lat, origin_lng, dest_lat, dest_lng):
             return (None, None, None)
 
         route = data["routes"][0]
-        leg = route["legs"][0]
-        duration_sec = leg["duration"]["value"]
-        distance_m = leg["distance"]["value"]
+        legs = route["legs"]
+        duration_sec = sum(leg["duration"]["value"] for leg in legs)
+        distance_m = sum(leg["distance"]["value"] for leg in legs)
         polyline = route.get("overview_polyline", {}).get("points")
         return (int(duration_sec // 60), int(distance_m), polyline)
     except Exception:
         return (None, None, None)
+

@@ -2,12 +2,21 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponseBadRequest
 from django.db import transaction
 from django.conf import settings
+
 from .models import Ruta
 from usuarios.models import Usuario, PerfilMensajero
 from envios.models import Envio
+from .services.google_maps import get_route_metrics, geocode_address
 
 import json
 import requests
+import numpy as np
+
+from .routing import (
+    compute_algorithmic_route,
+    load_delay_model,
+    build_time_matrix_with_google
+)
 
 DIRECTIONS_URL = "https://maps.googleapis.com/maps/api/directions/json"
 
@@ -99,6 +108,9 @@ def lista_rutas(request):
     })
 
 
+# ============================
+# Vista: Optimización de rutas
+# ============================
 def optimizar_rutas(request, mensajero_id):
     if request.method != "GET":
         return HttpResponseBadRequest("Método no soportado")
@@ -111,25 +123,21 @@ def optimizar_rutas(request, mensajero_id):
     if not envios:
         return redirect("lista_rutas")
 
-    puntos_json = []
-    waypoints = []
+    puntos_json, stops = [], []
+    origen_mensajero = None
 
-    # ✅ Punto inicial: ubicación del mensajero
     try:
-        origen_mensajero = f"{float(perfil.latitud)},{float(perfil.longitud)}"
-    except (TypeError, ValueError):
-        origen_mensajero = None
-
-    if origen_mensajero:
+        origen_mensajero = (float(perfil.latitud), float(perfil.longitud))
         puntos_json.append({
             "id": f"mensajero-{mensajero.id}",
             "tipo": "Mensajero",
-            "lat": float(perfil.latitud),
-            "lng": float(perfil.longitud),
+            "lat": origen_mensajero[0],
+            "lng": origen_mensajero[1],
             "direccion": "Ubicación inicial del mensajero"
         })
+    except (TypeError, ValueError):
+        pass
 
-    # ✅ Agregar TODOS los puntos de los envíos (Recojo/Envío)
     for envio in envios:
         if envio.tipo == "Recojo" and envio.latitud_origen and envio.longitud_origen:
             try:
@@ -137,12 +145,11 @@ def optimizar_rutas(request, mensajero_id):
                 puntos_json.append({
                     "id": envio.id,
                     "tipo": "Recojo",
-                    "lat": lat,
-                    "lng": lng,
+                    "lat": lat, "lng": lng,
                     "direccion": envio.origen_direccion
                 })
-                waypoints.append(f"{lat},{lng}")
-            except (TypeError, ValueError):
+                stops.append({"id": envio.id, "lat": lat, "lng": lng, "tipo_servicio": envio.tipo_servicio})
+            except Exception:
                 pass
 
         elif envio.tipo == "Envío" and envio.latitud_destino and envio.longitud_destino:
@@ -151,38 +158,44 @@ def optimizar_rutas(request, mensajero_id):
                 puntos_json.append({
                     "id": envio.id,
                     "tipo": "Envío",
-                    "lat": lat,
-                    "lng": lng,
+                    "lat": lat, "lng": lng,
                     "direccion": envio.destino_direccion
                 })
-                waypoints.append(f"{lat},{lng}")
-            except (TypeError, ValueError):
+                stops.append({"id": envio.id, "lat": lat, "lng": lng, "tipo_servicio": envio.tipo_servicio})
+            except Exception:
                 pass
 
-    # ✅ limpiar duplicados pero manteniendo el orden
-    waypoints = list(dict.fromkeys(waypoints))
-
-    if not origen_mensajero or len(waypoints) < 1:
+    if not origen_mensajero or len(stops) < 1:
         return redirect("lista_rutas")
 
-    # ✅ Directions: mensajero como ORIGEN y todos los puntos como paradas
+    # ✅ RUTA GOOGLE
+    waypoints = [f"{s['lat']},{s['lng']}" for s in stops]
     if len(waypoints) == 1:
         destination = waypoints[0]
-        stops = []
+        wp = []
     else:
-        destination = waypoints[-1]
-        stops = waypoints[:-1]
+        destination, wp = waypoints[-1], waypoints[:-1]
 
     dur_google, dist_google, poly_google = get_route_metrics(
-        *origen_mensajero.split(","), *destination.split(","), waypoints=stops
+        *map(str, origen_mensajero), *destination.split(","), waypoints=wp
     )
 
-    # ========= ALGORITMO (placeholder) =========
-    ruta_orden = list(envios)
-    poly_algo, dist_algo, dur_algo = "", 0, 0
+    # ✅ RUTA ALGORÍTMICA
+    coords = [origen_mensajero] + [(s["lat"], s["lng"]) for s in stops]
+    time_matrix = build_time_matrix_with_google(coords, settings.GOOGLE_MAPS_API_KEY)
+    delay_model = load_delay_model("delay_tree.joblib")
+
+    algo = compute_algorithmic_route(
+        origin=origen_mensajero,
+        stops=stops,
+        time_matrix=time_matrix,
+        delay_model=delay_model
+    )
+
+    poly_algo, dist_algo, dur_algo = "", None, algo["end_time_min"]
 
     with transaction.atomic():
-        for e in ruta_orden:
+        for e in envios:
             Ruta.objects.get_or_create(
                 mensajero=mensajero, envio=e,
                 defaults=dict(
@@ -192,45 +205,6 @@ def optimizar_rutas(request, mensajero_id):
                     longitud_fin=e.longitud_destino
                 )
             )
-
-    # ========= REAL (vacío) =========
-    poly_real, dur_real, dist_real = "", None, None
-
-    # ========= JSON espejo de lista_rutas =========
-    envios_json_data = []
-    for envio in envios:
-        envios_json_data.append({
-            "id": envio.id,
-            "origen_direccion": envio.origen_direccion,
-            "destino_direccion": envio.destino_direccion,
-            "destinatario_nombre": envio.destinatario_nombre,
-            "destinatario_telefono": envio.destinatario_telefono,
-            "peso": str(envio.peso) if getattr(envio, "peso", None) is not None else None,
-            "tipo_servicio": envio.tipo_servicio,
-            "estado": envio.estado,
-            "observaciones": envio.observaciones,
-            "creado_en": envio.creado_en.strftime("%Y-%m-%d %H:%M:%S") if getattr(envio, "creado_en", None) else None,
-            "ruta_id": envio.ruta_id,
-            "remitente_id": envio.remitente_id,
-            "latitud_destino": float(envio.latitud_destino) if getattr(envio, "latitud_destino", None) else None,
-            "latitud_origen": float(envio.latitud_origen) if getattr(envio, "latitud_origen", None) else None,
-            "longitud_destino": float(envio.longitud_destino) if getattr(envio, "longitud_destino", None) else None,
-            "longitud_origen": float(envio.longitud_origen) if getattr(envio, "longitud_origen", None) else None,
-            "monto_pago": str(envio.monto_pago) if getattr(envio, "monto_pago", None) else None,
-            "tipo": envio.tipo,
-            "tipo_pago": envio.tipo_pago,
-            "mensajero_id": envio.mensajero_id,
-            "remitente_nombre": getattr(envio, "remitente_nombre", None),
-            "remitente_telefono": getattr(envio, "remitente_telefono", None),
-            "origen": {
-                "lat": float(envio.latitud_origen) if getattr(envio, "latitud_origen", None) else None,
-                "lng": float(envio.longitud_origen) if getattr(envio, "longitud_origen", None) else None,
-            },
-            "destino": {
-                "lat": float(envio.latitud_destino) if getattr(envio, "latitud_destino", None) else None,
-                "lng": float(envio.longitud_destino) if getattr(envio, "longitud_destino", None) else None,
-            },
-        })
 
     return render(request, "rutas/optimizar_rutas.html", {
         "ruta_google": {
@@ -244,14 +218,14 @@ def optimizar_rutas(request, mensajero_id):
             "distancia": dist_algo
         },
         "ruta_real": {
-            "polyline": poly_real,
-            "duracion": dur_real,
-            "distancia": dist_real
+            "polyline": "",
+            "duracion": None,
+            "distancia": None
         },
-        "puntos": json.dumps(puntos_json, ensure_ascii=False),   # ✅ incluye TODOS
-        "envios_json": json.dumps(envios_json_data, ensure_ascii=False),
+        "puntos": json.dumps(puntos_json, ensure_ascii=False),
         "GOOGLE_MAPS_API_KEY": settings.GOOGLE_MAPS_API_KEY,
     })
+
 
 # ============================
 # Vista: Ver ruta específica
