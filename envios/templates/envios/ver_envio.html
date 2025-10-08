@@ -12,63 +12,80 @@
     <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
 
     <style>
+        body {
+            background: #f5f5f5;
+        }
+
         .guia-container {
             background: #fff;
             border: 2px solid #222;
             border-radius: 6px;
             max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
+            margin: 30px auto;
+            padding: 25px 25px 35px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-            position: relative;
         }
 
+        /* === Encabezado === */
         .encabezado {
-            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 2px solid #000;
             padding-bottom: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .encabezado h2 {
+        .encabezado-texto {
+            text-align: center;
+            flex: 1;
+        }
+
+        .encabezado-texto h2 {
             margin: 0;
             font-size: 20px;
             font-weight: bold;
         }
 
-        .encabezado p {
+        .encabezado-texto p {
             margin: 2px 0;
             font-size: 13px;
+            color: #333;
         }
 
-        .numero-guia {
-            text-align: right;
-            color: #b00;
-            font-weight: bold;
-            font-size: 16px;
-        }
-
-        /* --- QR --- */
+        /* === QR === */
         .qr-container {
-            position: absolute;
-            top: 15px;
-            right: 15px;
             text-align: center;
+            padding: 6px;
+            border: 1px solid #999;
+            border-radius: 6px;
+            background: #fff;
+            flex-shrink: 0;
         }
 
         .qr-container img {
-            width: 100px;
-            height: 100px;
-            border: 1px solid #333;
+            width: 110px;
+            height: 110px;
+            object-fit: contain;
             border-radius: 4px;
         }
 
         .qr-container p {
             font-size: 10px;
-            margin-top: 5px;
+            margin-top: 4px;
             color: #333;
         }
 
+        /* === Número de Guía === */
+        .numero-guia {
+            text-align: right;
+            color: #b00;
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* === Tablas === */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -100,6 +117,7 @@
             font-size: 12px;
         }
 
+        /* === Mapa === */
         .mapa {
             margin-top: 20px;
             border: 1px solid #ccc;
@@ -112,10 +130,11 @@
             width: 100%;
         }
 
+        /* === Botones === */
         .acciones {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
+            margin-top: 25px;
             flex-wrap: wrap;
             gap: 10px;
         }
@@ -139,7 +158,7 @@
         .btn-entrega { background: #ffc107; color: #000; }
         .btn-entrega:hover { background: #e0a800; }
 
-        /* 🔹 Estilo impresión */
+        /* === Impresión === */
         @media print {
             @page { margin: 0; size: A4 portrait; }
             html, body {
@@ -172,22 +191,32 @@
     {% include 'includes/navbar.html' %}
 
     <div class="guia-container">
-        <!-- 📦 QR de seguimiento -->
-        <div class="qr-container">
-            <img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={{ request.build_absolute_uri }}" alt="QR Envío">
-            <p>Escanee para ver el envío</p>
-        </div>
-
+        <!-- === ENCABEZADO === -->
         <div class="encabezado">
-            <h2>COURIER BOLIVIAN EXPRESS S.R.L.</h2>
-            <p>Av. Busch Calle Estados Unidos casi esq. Guatemala Nº 1193 (Zona Miraflores) - La Paz - Bolivia</p>
-            <p>Teléfonos: 2224639 - 2228658 - 2241493 - 2222174</p>
+            <div class="encabezado-texto">
+                <h2>COURIER BOLIVIAN EXPRESS S.R.L.</h2>
+                <p>Av. Busch Calle Estados Unidos casi esq. Guatemala Nº 1193 (Zona Miraflores) - La Paz - Bolivia</p>
+                <p>Teléfonos: 2224639 - 2228658 - 2241493 - 2222174</p>
+            </div>
+
+            <div class="qr-container">
+                {% if qr_base64 %}
+                    <img src="data:image/png;base64,{{ qr_base64 }}" alt="QR Envío">
+                {% elif envio.qr_code %}
+                    <img src="{{ envio.qr_code.url }}" alt="QR Envío">
+                {% else %}
+                    <img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={{ request.build_absolute_uri|urlencode }}" alt="QR Envío">
+                {% endif %}
+                <p>Escanee para verificar</p>
+            </div>
         </div>
 
+        <!-- === N° de Guía === -->
         <div class="numero-guia">
             <p>GUÍA Nº <strong>{{ envio.id|stringformat:"06d" }}</strong></p>
         </div>
 
+        <!-- === TABLAS DE INFORMACIÓN === -->
         <table>
             <tr>
                 <th>Consignor / Compañía</th>
@@ -250,11 +279,12 @@
             </tr>
         </table>
 
+        <!-- === MAPA === -->
         <div class="mapa">
             <div id="map"></div>
         </div>
 
-        <!-- Botones -->
+        <!-- === BOTONES === -->
         <div class="acciones">
             <a href="{% url 'lista_envios' %}" class="btn btn-volver">⬅ Volver</a>
             <a href="{% url 'registrar_entrega' envio.id %}" class="btn btn-entrega">📦 Registrar Entrega</a>
@@ -262,25 +292,29 @@
         </div>
     </div>
 
-    <!-- Google Maps -->
+    <!-- === GOOGLE MAPS === -->
     <script>
         function initMap() {
-            const origen = {
-                lat: parseFloat("{{ envio.latitud_origen|default:-16.5 }}"),
-                lng: parseFloat("{{ envio.longitud_origen|default:-68.1193 }}")
-            };
-            const destino = {
-                lat: parseFloat("{{ envio.latitud_destino|default:-16.52 }}"),
-                lng: parseFloat("{{ envio.longitud_destino|default:-68.12 }}")
-            };
+            const origenLat = Number("{{ envio.latitud_origen|default:'' }}".replace(',', '.'));
+            const origenLng = Number("{{ envio.longitud_origen|default:'' }}".replace(',', '.'));
+            const destinoLat = Number("{{ envio.latitud_destino|default:'' }}".replace(',', '.'));
+            const destinoLng = Number("{{ envio.longitud_destino|default:'' }}".replace(',', '.'));
+
+            if (isNaN(origenLat) || isNaN(origenLng) || isNaN(destinoLat) || isNaN(destinoLng)) {
+                console.warn("⚠️ Coordenadas no válidas en el envío");
+                return;
+            }
+
+            const origen = { lat: origenLat, lng: origenLng };
+            const destino = { lat: destinoLat, lng: destinoLng };
 
             const map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 13,
                 center: origen
             });
 
-            new google.maps.Marker({ map, position: origen, label: "O" });
-            new google.maps.Marker({ map, position: destino, label: "D" });
+            new google.maps.Marker({ map, position: origen, label: "O", title: "Origen del envío" });
+            new google.maps.Marker({ map, position: destino, label: "D", title: "Destino del envío" });
 
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(origen);

@@ -5,29 +5,41 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 
+# Importar vistas de JWT
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
+
 urlpatterns = [
-    # Ruta del administrador
+    # Admin
     path('admin/', admin.site.urls),
 
-    # Redirige la ruta base al login si no estás autenticado
-    path('', lambda request: redirect('usuarios:login') if 'usuario_id' not in request.session else redirect('usuarios:home')),  # Redirigir a la vista 'login' de 'usuarios' si no estás autenticado
+    # 🔹 Redirigir raíz según sesión de usuario (solo interfaz web)
+    path(
+        '',
+        lambda request: redirect('usuarios:login')
+        if 'usuario_id' not in request.session
+        else redirect('usuarios:home'),
+    ),
 
-    # Rutas para la aplicación de envíos
+    # 🔹 Módulos internos del sistema web
     path('envios/', include('envios.urls')),
-
-    # Rutas para la aplicación de usuarios
-    path('usuarios/', include('usuarios.urls')),  # Asegúrate de que esta URL esté incluida
-
-    # Rutas para la aplicación de rutas
+    path('usuarios/', include('usuarios.urls')),
     path('rutas/', include('rutas.urls')),
-
-    # Rutas para la aplicación de zonas
     path('zonas/', include('zonas.urls')),
 
-    # Vista de cerrar sesión - Movemos esta URL a 'usuarios' para que esté dentro del espacio de nombres correcto
-    path('usuarios/logout/', auth_views.LogoutView.as_view(), name='cerrar_sesion'),  # Vista de cierre de sesión
+    # 🔹 Cierre de sesión del panel web
+    path('usuarios/logout/', auth_views.LogoutView.as_view(), name='cerrar_sesion'),
+
+    # 🔹 API para autenticación JWT (para Flutter)
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # 🔹 Endpoint de prueba autenticado
+    path('api/', include('envios.urls')),  # ejemplo: /api/me/
 ]
 
-# Agregar la configuración para servir archivos de medios en desarrollo
+# 🔹 Servir archivos de medios durante desarrollo
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -16,10 +16,12 @@ class Envio(models.Model):
     )
 
     remitente = models.ForeignKey(
-        Usuario,
-        related_name='remitente',
-        on_delete=models.CASCADE
-    )
+    Usuario,
+    related_name='remitente',
+    on_delete=models.CASCADE,
+    null=True, blank=True
+)
+
     remitente_nombre = models.CharField(max_length=150)
     remitente_telefono = models.CharField(max_length=20)
 

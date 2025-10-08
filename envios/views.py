@@ -1,16 +1,26 @@
+import base64
+import qrcode
 import googlemaps
-from django.shortcuts import render, redirect, get_object_or_404
-from .models import Envio, Incidente, HistorialEnvio, Entrega
-from .forms import EnvioForm, IncidenteForm, EntregaForm  # Asegúrate de importar el formulario de Entrega
+from io import BytesIO
 from django.conf import settings
-from .models import Entrega, Incidente, Envio
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 
-# Configura tu clave API de Google Maps
+from .models import Envio, Incidente, HistorialEnvio, Entrega
+from .forms import EnvioForm, IncidenteForm, EntregaForm
+
+
+# ===============================
+# 🔑 CONFIGURACIÓN GOOGLE MAPS
+# ===============================
 gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
 
-# Función para obtener las coordenadas de una dirección
+
+# ===============================
+# 📍 FUNCIONES AUXILIARES
+# ===============================
 def obtener_coordenadas(direccion):
+    """Obtiene latitud y longitud a partir de una dirección usando Google Maps API."""
     direccion_completa = f"{direccion}, La Paz, Bolivia"
     geocode_result = gmaps.geocode(direccion_completa)
     if geocode_result:
@@ -20,13 +30,14 @@ def obtener_coordenadas(direccion):
     return None, None
 
 
-# Vista para listar los envíos
+# ===============================
+# 📦 ENVÍOS
+# ===============================
 def lista_envios(request):
-    envios = Envio.objects.all()  # Asegúrate de que no haya un filtro que limite los envíos
+    envios = Envio.objects.all()
     return render(request, 'envios/lista_envios.html', {'envios': envios})
 
-# Vista para crear un nuevo envío
-# Vista para crear un nuevo envío
+
 def crear_envio(request):
     if request.method == 'POST':
         form = EnvioForm(request.POST)
@@ -48,17 +59,31 @@ def crear_envio(request):
     else:
         form = EnvioForm()
     return render(request, 'envios/crear_envio.html', {'form': form})
-
-
-# Vista para ver los detalles de un envío
+    
 def ver_envio(request, envio_id):
-    envio = get_object_or_404(Envio, id=envio_id)  # Obtener el envío por su ID
-    return render(request, 'envios/ver_envio.html', {'envio': envio})
+    """Muestra la guía del envío con QR dinámico y mapa."""
+    envio = get_object_or_404(Envio, id=envio_id)
 
-# Vista para editar un envío
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Envio, HistorialEnvio
-from .forms import EnvioForm
+    # Generar QR dinámico sin almacenarlo
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=6,
+        border=2,
+    )
+    qr.add_data(request.build_absolute_uri())  # URL actual del envío
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+
+    return render(request, 'envios/ver_envio.html', {
+        'envio': envio,
+        'qr_base64': qr_base64
+    })
+
 
 def editar_envio(request, envio_id):
     envio = get_object_or_404(Envio, id=envio_id)
@@ -76,10 +101,14 @@ def editar_envio(request, envio_id):
             if lat_origen and lng_origen:
                 envio.latitud_origen = float(lat_origen)
                 envio.longitud_origen = float(lng_origen)
+            else:
+                envio.latitud_origen, envio.longitud_origen = obtener_coordenadas(envio.origen_direccion)
 
             if lat_destino and lng_destino:
                 envio.latitud_destino = float(lat_destino)
                 envio.longitud_destino = float(lng_destino)
+            else:
+                envio.latitud_destino, envio.longitud_destino = obtener_coordenadas(envio.destino_direccion)
 
             envio.save()
 
@@ -90,54 +119,52 @@ def editar_envio(request, envio_id):
                 ubicacion_longitud=envio.longitud_origen
             )
 
+            messages.success(request, "Envío actualizado correctamente.")
             return redirect('lista_envios')
     else:
         form = EnvioForm(instance=envio)
 
-    return render(request, 'envios/editar_envio.html', {
-        'form': form,
-        'envio': envio
-    })
+    return render(request, 'envios/editar_envio.html', {'form': form, 'envio': envio})
 
 
-# Vista para eliminar un envío
 def eliminar_envio(request, envio_id):
-    envio = get_object_or_404(Envio, id=envio_id)  # Obtener el envío por su ID
+    envio = get_object_or_404(Envio, id=envio_id)
     if request.method == 'POST':
         envio.delete()
-        return redirect('lista_envios')  # Redirigir a la lista de envíos
+        return redirect('lista_envios')
     return render(request, 'envios/eliminar_envio.html', {'envio': envio})
 
-# Vista para registrar un incidente en un envío
+
+# ===============================
+# ⚠️ INCIDENTES
+# ===============================
 def registrar_incidente(request, envio_id):
     envio = get_object_or_404(Envio, id=envio_id)
     if request.method == 'POST':
         form = IncidenteForm(request.POST)
         if form.is_valid():
             incidente = form.save(commit=False)
-            incidente.envio = envio  # Asociar el incidente al envío
+            incidente.envio = envio
             incidente.save()
 
-            # Agregar un evento en el historial para el incidente
             HistorialEnvio.objects.create(
                 envio=envio,
                 tipo_evento='Incidente',
                 ubicacion_latitud=envio.latitud_origen,
                 ubicacion_longitud=envio.longitud_origen
             )
-
-            return redirect('ver_envio', envio_id=envio.id)  # Redirigir a los detalles del envío
+            return redirect('ver_envio', envio_id=envio.id)
     else:
         form = IncidenteForm()
     return render(request, 'envios/registrar_incidente.html', {'form': form, 'envio': envio})
 
-# Vista para ver los detalles de un incidente
+
 def ver_incidente(request, envio_id, incidente_id):
     envio = get_object_or_404(Envio, id=envio_id)
     incidente = get_object_or_404(Incidente, id=incidente_id)
     return render(request, 'envios/ver_incidente.html', {'incidente': incidente, 'envio': envio})
 
-# Vista para editar un incidente
+
 def editar_incidente(request, envio_id, incidente_id):
     envio = get_object_or_404(Envio, id=envio_id)
     incidente = get_object_or_404(Incidente, id=incidente_id)
@@ -145,44 +172,46 @@ def editar_incidente(request, envio_id, incidente_id):
         form = IncidenteForm(request.POST, instance=incidente)
         if form.is_valid():
             form.save()
+            messages.success(request, "Incidente actualizado correctamente.")
             return redirect('ver_incidente', envio_id=envio.id, incidente_id=incidente.id)
     else:
         form = IncidenteForm(instance=incidente)
     return render(request, 'envios/editar_incidente.html', {'form': form, 'envio': envio})
 
-# Vista para eliminar un incidente
+
 def eliminar_incidente(request, envio_id, incidente_id):
     envio = get_object_or_404(Envio, id=envio_id)
     incidente = get_object_or_404(Incidente, id=incidente_id)
     if request.method == 'POST':
         incidente.delete()
-        return redirect('ver_envio', envio_id=envio.id)  # Redirigir a la página del envío
+        return redirect('ver_envio', envio_id=envio.id)
     return render(request, 'envios/eliminar_incidente.html', {'incidente': incidente, 'envio': envio})
 
-# Vista para listar entregas
+
+# ===============================
+# 📬 ENTREGAS
+# ===============================
 def lista_entregas(request):
-    entregas = Entrega.objects.all()  # Obtener todas las entregas de la base de datos
+    entregas = Entrega.objects.all()
     return render(request, 'envios/lista_entregas.html', {'entregas': entregas})
 
-# Vista para ver los detalles de una entrega
+
 def ver_entrega(request, entrega_id):
     entrega = get_object_or_404(Entrega, id=entrega_id)
     return render(request, 'envios/ver_entrega.html', {'entrega': entrega})
 
-# Vista para registrar una entrega
 
 def registrar_entrega(request, envio_id):
     envio = get_object_or_404(Envio, id=envio_id)
-
     if request.method == 'POST':
         form = EntregaForm(request.POST, request.FILES)
         if form.is_valid():
             entrega = form.save(commit=False)
             entrega.envio = envio
-            entrega.mensajero = envio.mensajero  # ✅ se asigna automáticamente
+            entrega.mensajero = envio.mensajero
             entrega.save()
 
-            # Registrar incidente si se llenó
+            # Si el formulario incluye incidente
             tipo = request.POST.get('tipo_incidente')
             descripcion = request.POST.get('descripcion_incidente')
             if tipo or descripcion:
@@ -199,35 +228,11 @@ def registrar_entrega(request, envio_id):
             messages.error(request, "Hubo un error en el formulario.")
     else:
         form = EntregaForm()
-
     return render(request, 'envios/registrar_entrega.html', {'form': form, 'envio': envio})
 
-# Vista para eliminar una entrega
-def eliminar_entrega(request, entrega_id):
-    entrega = get_object_or_404(Entrega, id=entrega_id)
-    if request.method == 'POST':
-        entrega.delete()
-        return redirect('lista_entregas')  # Redirigir a la lista de entregas
-    return render(request, 'envios/eliminar_entrega.html', {'entrega': entrega})
 
-# Vista para ver el historial de un envío
-def historial_envio(request, envio_id):
-    envio = get_object_or_404(Envio, id=envio_id)  # Obtener el envío por su ID
-    historial = HistorialEnvio.objects.filter(envio=envio)  # Obtener el historial relacionado al envío
-    return render(request, 'envios/historial_envio.html', {'envio': envio, 'historial': historial})
-
-# Vista para ver un evento específico en el historial de un envío
-def ver_evento_historial(request, envio_id, evento_id):
-    # Obtener el envío correspondiente
-    envio = get_object_or_404(Envio, id=envio_id)
-    
-    # Obtener el historial del evento correspondiente
-    evento = get_object_or_404(HistorialEnvio, id=evento_id)
-    
-    return render(request, 'envios/ver_evento_historial.html', {'evento': evento, 'envio': envio})
 def editar_entrega(request, entrega_id):
     entrega = get_object_or_404(Entrega, id=entrega_id)
-
     if request.method == 'POST':
         form = EntregaForm(request.POST, request.FILES, instance=entrega)
         if form.is_valid():
@@ -236,8 +241,27 @@ def editar_entrega(request, entrega_id):
             return redirect('ver_entrega', entrega_id=entrega.id)
     else:
         form = EntregaForm(instance=entrega)
+    return render(request, 'entregas/editar_entrega.html', {'form': form, 'entrega': entrega})
 
-    return render(request, 'entregas/editar_entrega.html', {
-        'form': form,
-        'entrega': entrega
-    })
+
+def eliminar_entrega(request, entrega_id):
+    entrega = get_object_or_404(Entrega, id=entrega_id)
+    if request.method == 'POST':
+        entrega.delete()
+        return redirect('lista_entregas')
+    return render(request, 'envios/eliminar_entrega.html', {'entrega': entrega})
+
+
+# ===============================
+# 🕓 HISTORIAL
+# ===============================
+def historial_envio(request, envio_id):
+    envio = get_object_or_404(Envio, id=envio_id)
+    historial = HistorialEnvio.objects.filter(envio=envio)
+    return render(request, 'envios/historial_envio.html', {'envio': envio, 'historial': historial})
+
+
+def ver_evento_historial(request, envio_id, evento_id):
+    envio = get_object_or_404(Envio, id=envio_id)
+    evento = get_object_or_404(HistorialEnvio, id=evento_id)
+    return render(request, 'envios/ver_evento_historial.html', {'evento': evento, 'envio': envio})
