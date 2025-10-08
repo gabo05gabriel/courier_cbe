@@ -4,120 +4,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalles del Sobre</title>
+    <title>Guía de Envío - {{ envio.id }}</title>
 
-    <!-- Archivos CSS -->
+    <!-- CSS Base -->
     <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
-    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
-    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
 
     <style>
-        #map {
-            height: 400px;
-            width: 100%;
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
-        }
-
-        .details {
+        .guia-container {
             background: #fff;
+            border: 2px solid #222;
+            border-radius: 6px;
+            max-width: 900px;
+            margin: 20px auto;
             padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 12px;
-            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            position: relative;
         }
 
-        .details p {
-            margin: 8px 0;
-            font-size: 15px;
+        .encabezado {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .encabezado h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .encabezado p {
+            margin: 2px 0;
+            font-size: 13px;
+        }
+
+        .numero-guia {
+            text-align: right;
+            color: #b00;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* --- QR --- */
+        .qr-container {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            text-align: center;
+        }
+
+        .qr-container img {
+            width: 100px;
+            height: 100px;
+            border: 1px solid #333;
+            border-radius: 4px;
+        }
+
+        .qr-container p {
+            font-size: 10px;
+            margin-top: 5px;
             color: #333;
         }
 
-        .btn-crear {
-            display: inline-block;
-            padding: 10px 18px;
-            background: #007BFF;
-            color: #fff;
-            font-weight: bold;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            font-size: 13px;
+        }
+
+        td, th {
+            border: 1px solid #333;
+            padding: 6px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #eee;
+            text-align: left;
+        }
+
+        .sin-borde td {
+            border: none;
+        }
+
+        .firma {
+            height: 50px;
+        }
+
+        .nota {
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .mapa {
+            margin-top: 20px;
+            border: 1px solid #ccc;
             border-radius: 8px;
-            text-decoration: none;
-            transition: background 0.3s ease;
+            overflow: hidden;
         }
 
-        .btn-crear:hover {
-            background: #0056b3;
+        #map {
+            height: 300px;
+            width: 100%;
         }
 
-        a.volver {
-            display: inline-block;
-            margin-top: 15px;
-            text-decoration: none;
-            color: #28a745;
+        .acciones {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
             font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            text-align: center;
         }
 
-        a.volver:hover {
-            color: #1e7e34;
+        .btn-volver { background: #28a745; color: #fff; }
+        .btn-volver:hover { background: #1e7e34; }
+
+        .btn-imprimir { background: #007bff; color: #fff; }
+        .btn-imprimir:hover { background: #0056b3; }
+
+        .btn-entrega { background: #ffc107; color: #000; }
+        .btn-entrega:hover { background: #e0a800; }
+
+        /* 🔹 Estilo impresión */
+        @media print {
+            @page { margin: 0; size: A4 portrait; }
+            html, body {
+                background: #fff;
+                margin: 0;
+                padding: 0;
+            }
+
+            .navbar, .acciones { display: none !important; }
+
+            .guia-container {
+                border: 2px solid #000;
+                box-shadow: none;
+                margin: 0;
+                padding: 15px;
+                width: 100%;
+                max-width: none;
+            }
+
+            #map {
+                height: 300px !important;
+                width: 100% !important;
+                border: 1px solid #000;
+            }
         }
     </style>
 </head>
 <body>
+
     {% include 'includes/navbar.html' %}
 
-    <div class="container">
-        <h1>Detalles del Sobre</h1>
-
-        <div class="details">
-            <p><strong>Remitente:</strong> {{ envio.remitente_nombre }}</p>
-            <p><strong>Teléfono del Remitente:</strong> {{ envio.remitente_telefono }}</p>
-
-            <p><strong>Destinatario:</strong> {{ envio.destinatario_nombre }}</p>
-            <p><strong>Teléfono del Destinatario:</strong> {{ envio.destinatario_telefono }}</p>
-
-            <p><strong>Dirección de Origen:</strong> {{ envio.origen_direccion }}</p>
-            <p><strong>Dirección de Destino:</strong> {{ envio.destino_direccion }}</p>
-
-            <p><strong>Peso:</strong> {{ envio.peso }} kg</p>
-            <p><strong>Tipo de Envío:</strong> {{ envio.tipo }}</p> <!-- 👈 Nuevo campo -->
-            <p><strong>Tipo de Servicio:</strong> {{ envio.tipo_servicio }}</p>
-            <p><strong>Estado:</strong> {{ envio.estado }}</p>
-            <p><strong>Observaciones:</strong> {{ envio.observaciones|default:"(Sin observaciones)" }}</p>
-
-            <p><strong>Latitud de Origen:</strong> {{ envio.latitud_origen }}</p>
-            <p><strong>Longitud de Origen:</strong> {{ envio.longitud_origen }}</p>
-            <p><strong>Latitud de Destino:</strong> {{ envio.latitud_destino }}</p>
-            <p><strong>Longitud de Destino:</strong> {{ envio.longitud_destino }}</p>
-
-            <p><strong>Monto de Pago:</strong> {{ envio.monto_pago }} Bs</p>
-            <p><strong>Tipo de Pago:</strong> {{ envio.tipo_pago }}</p>
-
-            <p><strong>Mensajero:</strong>
-                {% if envio.mensajero %}
-                    {{ envio.mensajero.nombre }}
-                {% else %}
-                    No asignado
-                {% endif %}
-            </p>
-
-            <p><strong>Creado en:</strong> {{ envio.creado_en|date:"d/m/Y H:i" }}</p>
+    <div class="guia-container">
+        <!-- 📦 QR de seguimiento -->
+        <div class="qr-container">
+            <img src="https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl={{ request.build_absolute_uri }}" alt="QR Envío">
+            <p>Escanee para ver el envío</p>
         </div>
 
-        <h2>Ubicación de Origen y Destino</h2>
-        <div id="map"></div>
-
-        <div style="margin: 25px 0;">
-            <a href="{% url 'registrar_entrega' envio.id %}" class="btn-crear">
-                 Registrar Entrega
-            </a>
+        <div class="encabezado">
+            <h2>COURIER BOLIVIAN EXPRESS S.R.L.</h2>
+            <p>Av. Busch Calle Estados Unidos casi esq. Guatemala Nº 1193 (Zona Miraflores) - La Paz - Bolivia</p>
+            <p>Teléfonos: 2224639 - 2228658 - 2241493 - 2222174</p>
         </div>
 
-        <a href="{% url 'lista_envios' %}" class="volver">⬅ Volver a la lista de sobres</a>
+        <div class="numero-guia">
+            <p>GUÍA Nº <strong>{{ envio.id|stringformat:"06d" }}</strong></p>
+        </div>
+
+        <table>
+            <tr>
+                <th>Consignor / Compañía</th>
+                <td>{{ envio.remitente_nombre }}</td>
+                <th>Phone / Teléfono</th>
+                <td>{{ envio.remitente_telefono }}</td>
+            </tr>
+            <tr>
+                <th>Consignee / Consignatario</th>
+                <td>{{ envio.destinatario_nombre }}</td>
+                <th>Phone / Teléfono</th>
+                <td>{{ envio.destinatario_telefono }}</td>
+            </tr>
+            <tr>
+                <th>Origin / Origen</th>
+                <td>{{ envio.origen_direccion }}</td>
+                <th>Destination / Destino</th>
+                <td>{{ envio.destino_direccion }}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th>No. de Piezas</th>
+                <th>Peso (kg)</th>
+                <th>Valor Declarado (Bs)</th>
+                <th>Tipo Servicio</th>
+                <th>Tipo Pago</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>{{ envio.peso }}</td>
+                <td>{{ envio.monto_pago }}</td>
+                <td>{{ envio.tipo_servicio }}</td>
+                <td>{{ envio.tipo_pago }}</td>
+            </tr>
+        </table>
+
+        <table>
+            <tr>
+                <th>Mensajero</th>
+                <td>{{ envio.mensajero.nombre|default:"No asignado" }}</td>
+                <th>Fecha / Hora</th>
+                <td>{{ envio.creado_en|date:"d/m/Y H:i" }}</td>
+            </tr>
+            <tr>
+                <th>Estado</th>
+                <td>{{ envio.estado }}</td>
+                <th>Observaciones</th>
+                <td>{{ envio.observaciones|default:"(Sin observaciones)" }}</td>
+            </tr>
+        </table>
+
+        <p class="nota">☑ Declaro que este envío NO contiene dinero ni objetos de valor.</p>
+
+        <table class="sin-borde">
+            <tr>
+                <td class="firma"><strong>Firma del Remitente:</strong></td>
+                <td class="firma"><strong>Firma del Consignatario:</strong></td>
+            </tr>
+        </table>
+
+        <div class="mapa">
+            <div id="map"></div>
+        </div>
+
+        <!-- Botones -->
+        <div class="acciones">
+            <a href="{% url 'lista_envios' %}" class="btn btn-volver">⬅ Volver</a>
+            <a href="{% url 'registrar_entrega' envio.id %}" class="btn btn-entrega">📦 Registrar Entrega</a>
+            <button class="btn btn-imprimir" onclick="window.print()">🖨 Imprimir Guía</button>
+        </div>
     </div>
 
-    <!-- Script del mapa -->
+    <!-- Google Maps -->
     <script>
         function initMap() {
             const origen = {
@@ -134,11 +279,9 @@
                 center: origen
             });
 
-            // Marcadores
             new google.maps.Marker({ map, position: origen, label: "O" });
             new google.maps.Marker({ map, position: destino, label: "D" });
 
-            // Ajustar vista para que se vean ambos
             const bounds = new google.maps.LatLngBounds();
             bounds.extend(origen);
             bounds.extend(destino);
@@ -146,7 +289,7 @@
         }
     </script>
 
-    <!-- Token de tu API de Google Maps -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+
 </body>
 </html>

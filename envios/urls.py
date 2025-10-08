@@ -11,18 +11,18 @@ urlpatterns = [
 
     # Rutas para entregas
     path('entregas/', views.lista_entregas, name='lista_entregas'),  # Lista de entregas
-    path('entregas/crear/<int:envio_id>/', views.registrar_entrega, name='registrar_entrega'),  # Registrar nueva entrega (requiere un envío)
+    path('entregas/crear/<int:envio_id>/', views.registrar_entrega, name='registrar_entrega'),  # Registrar nueva entrega
     path('entregas/<int:entrega_id>/', views.ver_entrega, name='ver_entrega'),  # Ver detalles de una entrega
     path('entregas/<int:entrega_id>/editar/', views.editar_entrega, name='editar_entrega'),  # Editar una entrega
     path('entregas/<int:entrega_id>/eliminar/', views.eliminar_entrega, name='eliminar_entrega'),  # Eliminar una entrega
 
-    # Rutas para historial de envío
+    # Rutas para historial
     path('envios/<int:envio_id>/historial/', views.historial_envio, name='historial_envio'),  # Ver historial de un envío
-    path('envios/<int:envio_id>/historial/<int:evento_id>/', views.ver_evento_historial, name='ver_evento_historial'),  # Ver un evento específico en el historial
+    path('envios/<int:envio_id>/historial/<int:evento_id>/', views.ver_evento_historial, name='ver_evento_historial'),
 
     # Rutas para incidentes
-    path('envios/<int:envio_id>/incidentes/', views.registrar_incidente, name='registrar_incidente'),  # Registrar incidente en un envío
-    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/', views.ver_incidente, name='ver_incidente'),  # Ver detalles de un incidente
-    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/editar/', views.editar_incidente, name='editar_incidente'),  # Editar un incidente
-    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/eliminar/', views.eliminar_incidente, name='eliminar_incidente'),  # Eliminar un incidente
+    path('envios/<int:envio_id>/incidentes/', views.registrar_incidente, name='registrar_incidente'),
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/', views.ver_incidente, name='ver_incidente'),
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/editar/', views.editar_incidente, name='editar_incidente'),
+    path('envios/<int:envio_id>/incidentes/<int:incidente_id>/eliminar/', views.eliminar_incidente, name='eliminar_incidente'),
 ]

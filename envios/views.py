@@ -3,6 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Envio, Incidente, HistorialEnvio, Entrega
 from .forms import EnvioForm, IncidenteForm, EntregaForm  # Asegúrate de importar el formulario de Entrega
 from django.conf import settings
+from .models import Entrega, Incidente, Envio
+from django.contrib import messages
 
 # Configura tu clave API de Google Maps
 gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
@@ -168,52 +170,37 @@ def ver_entrega(request, entrega_id):
     return render(request, 'envios/ver_entrega.html', {'entrega': entrega})
 
 # Vista para registrar una entrega
-def registrar_entrega(request, envio_id):
-    envio = Envio.objects.get(id=envio_id)  # Get the 'envio' object by ID
 
-    if request.method == "POST":
-        form = EntregaForm(request.POST, request.FILES, envio=envio)  # Pass the envio object to the form
+def registrar_entrega(request, envio_id):
+    envio = get_object_or_404(Envio, id=envio_id)
+
+    if request.method == 'POST':
+        form = EntregaForm(request.POST, request.FILES)
         if form.is_valid():
             entrega = form.save(commit=False)
-            entrega.envio = envio  # Assign the 'envio' to the entrega
+            entrega.envio = envio
+            entrega.mensajero = envio.mensajero  # ✅ se asigna automáticamente
             entrega.save()
-            return redirect('ver_envio', envio_id=envio.id)  # Redirect to 'ver_envio' after saving
+
+            # Registrar incidente si se llenó
+            tipo = request.POST.get('tipo_incidente')
+            descripcion = request.POST.get('descripcion_incidente')
+            if tipo or descripcion:
+                Incidente.objects.create(
+                    envio=envio,
+                    tipo=tipo or 'Otro',
+                    descripcion=descripcion or ''
+                )
+
+            messages.success(request, "Entrega registrada correctamente.")
+            return redirect('ver_envio', envio.id)
+        else:
+            print("❌ ERRORES DE FORMULARIO:", form.errors)
+            messages.error(request, "Hubo un error en el formulario.")
     else:
-        form = EntregaForm(envio=envio)  # Pass the envio object to the form
+        form = EntregaForm()
 
     return render(request, 'envios/registrar_entrega.html', {'form': form, 'envio': envio})
-# Vista para editar una entrega
-def editar_entrega(request, entrega_id):
-    # Obtener la entrega
-    entrega = get_object_or_404(Entrega, id=entrega_id)
-    
-    if request.method == 'POST':
-        form = EntregaForm(request.POST, request.FILES, instance=entrega)
-
-        if form.is_valid():
-            # Asignar el mensajero antes de guardar
-            if not entrega.mensajero:
-                entrega.mensajero = request.user  # Asigna el mensajero actual, o el que sea necesario
-
-            # Eliminar las fotos anteriores si el usuario sube nuevas
-            if 'firma' in request.FILES:
-                if entrega.firma:
-                    entrega.firma.delete()
-
-            if 'foto' in request.FILES:
-                if entrega.foto:
-                    entrega.foto.delete()
-
-            # Guardar los cambios de la entrega
-            form.save()
-
-            # Redirigir a la vista de detalles de la entrega
-            return redirect('ver_entrega', entrega_id=entrega.id)
-
-    else:
-        form = EntregaForm(instance=entrega)
-
-    return render(request, 'envios/editar_entrega.html', {'form': form, 'entrega': entrega})
 
 # Vista para eliminar una entrega
 def eliminar_entrega(request, entrega_id):
@@ -238,3 +225,19 @@ def ver_evento_historial(request, envio_id, evento_id):
     evento = get_object_or_404(HistorialEnvio, id=evento_id)
     
     return render(request, 'envios/ver_evento_historial.html', {'evento': evento, 'envio': envio})
+def editar_entrega(request, entrega_id):
+    entrega = get_object_or_404(Entrega, id=entrega_id)
+
+    if request.method == 'POST':
+        form = EntregaForm(request.POST, request.FILES, instance=entrega)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Entrega actualizada correctamente.")
+            return redirect('ver_entrega', entrega_id=entrega.id)
+    else:
+        form = EntregaForm(instance=entrega)
+
+    return render(request, 'entregas/editar_entrega.html', {
+        'form': form,
+        'entrega': entrega
+    })

@@ -158,26 +158,13 @@ class IncidenteForm(forms.ModelForm):
 class EntregaForm(forms.ModelForm):
     class Meta:
         model = Entrega
-        fields = ['mensajero', 'estado', 'firma', 'pagado']
+        # ✅ No incluimos 'mensajero' porque se asigna desde la vista
+        fields = ['estado', 'firma', 'pagado']
         widgets = {
-            'mensajero': forms.Select(attrs={'class': 'form-control'}),
             'estado': forms.Select(attrs={'class': 'form-control'}),
             'firma': forms.ClearableFileInput(attrs={'class': 'form-control'}),
-            'pagado': forms.CheckboxInput(attrs={'class': 'form-control'}),
+            'pagado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        envio = kwargs.pop('envio', None)  # Remove envio from kwargs and store it
-        super().__init__(*args, **kwargs)
-
-        # If the envio object exists, pre-set the mensajero field
-        if envio and envio.mensajero:
-            # Set the initial value of the mensajero field to the name
-            self.fields['mensajero'].initial = envio.mensajero.id
-            self.fields['mensajero'].widget = forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
-            # Change the label to the mensajero's name (access it as a string attribute)
-            self.fields['mensajero'].label = envio.mensajero.nombre  # Corrected here
-
 
     def clean_estado(self):
         estado = self.cleaned_data.get('estado')
