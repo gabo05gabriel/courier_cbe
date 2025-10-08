@@ -27,7 +27,7 @@
             align-items: center;
             justify-content: flex-start;
             text-align: center;
-            padding: 1rem 2rem;
+            padding: 1rem 2rem 2rem 2rem;
             box-sizing: border-box;
             max-width: 100vw;
         }
@@ -82,12 +82,29 @@
             transform: scale(1.02);
         }
 
-        /* 🔹 Evita crecimiento infinito y mantiene proporción */
         .chart-box canvas {
             width: 100% !important;
             height: auto !important;
             aspect-ratio: 16 / 9;
             max-height: 280px;
+        }
+
+        /* ======== BOTÓN IMPRIMIR ======== */
+        .print-btn {
+            margin-top: 2rem;
+            padding: 0.8rem 1.6rem;
+            background-color: #3498db;
+            color: #fff;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .print-btn:hover {
+            background-color: #2980b9;
         }
 
         /* ======== RESPONSIVE ======== */
@@ -108,6 +125,23 @@
             h1 { font-size: 1.2rem; }
             .chart-box { padding: 0.8rem; }
             .chart-box canvas { max-height: 220px; }
+            .print-btn { width: 90%; font-size: 0.9rem; }
+        }
+
+        /* Ocultar elementos no deseados en PDF */
+        @media print {
+            .print-btn, nav, .navbar, .header p {
+                display: none !important;
+            }
+            body {
+                background: #fff;
+                height: auto;
+            }
+            .chart-box {
+                box-shadow: none;
+                border: 1px solid #ccc;
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
@@ -131,6 +165,9 @@
                 <canvas id="entregasChart"></canvas>
             </div>
         </div>
+
+        <!-- 🔹 Botón para imprimir/exportar PDF -->
+        <button class="print-btn" onclick="window.print()">🖨️ Imprimir / Exportar PDF</button>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -156,7 +193,7 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: true, // 🔹 mantiene proporción estable
+                        maintainAspectRatio: true,
                         plugins: { legend: { display: false } },
                         scales: { y: { beginAtZero: true } }
                     }
