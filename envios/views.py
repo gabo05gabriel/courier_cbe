@@ -1,14 +1,13 @@
 import base64
 import qrcode
-import googlemaps
 from io import BytesIO
+import googlemaps
 from django.conf import settings
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-
 from .models import Envio, Incidente, HistorialEnvio, Entrega
 from .forms import EnvioForm, IncidenteForm, EntregaForm
-
+from django.http import JsonResponse
 
 # ===============================
 # 🔑 CONFIGURACIÓN GOOGLE MAPS
@@ -265,3 +264,48 @@ def ver_evento_historial(request, envio_id, evento_id):
     envio = get_object_or_404(Envio, id=envio_id)
     evento = get_object_or_404(HistorialEnvio, id=evento_id)
     return render(request, 'envios/ver_evento_historial.html', {'evento': evento, 'envio': envio})
+
+def entregas_api_json(request):
+    entregas = Entrega.objects.all()
+    data = []
+    for entrega in entregas:
+        data.append({
+            "id": entrega.id,
+            "envio": entrega.envio.id,
+            "mensajero": entrega.mensajero.nombre,
+            "estado": entrega.estado,
+            "fecha_entrega": entrega.fecha_entrega,
+        })
+    return JsonResponse(data, safe=False)
+def envios_pendientes_json(request):
+    """
+    Devuelve en formato JSON todos los envíos cuyo estado sea 'Pendiente'.
+    Incluye datos básicos para el rastreo y visualización.
+    """
+    envios = Envio.objects.filter(estado='Pendiente')
+    data = []
+
+    for envio in envios:
+        data.append({
+            "id": envio.id,
+            "tipo": envio.tipo,
+            "remitente_nombre": envio.remitente_nombre,
+            "remitente_telefono": envio.remitente_telefono,
+            "destinatario_nombre": envio.destinatario_nombre,
+            "destinatario_telefono": envio.destinatario_telefono,
+            "origen_direccion": envio.origen_direccion,
+            "destino_direccion": envio.destino_direccion,
+            "latitud_origen": str(envio.latitud_origen) if envio.latitud_origen else None,
+            "longitud_origen": str(envio.longitud_origen) if envio.longitud_origen else None,
+            "latitud_destino": str(envio.latitud_destino) if envio.latitud_destino else None,
+            "longitud_destino": str(envio.longitud_destino) if envio.longitud_destino else None,
+            "peso": float(envio.peso),
+            "tipo_servicio": envio.tipo_servicio,
+            "estado": envio.estado,
+            "monto_pago": float(envio.monto_pago) if envio.monto_pago else None,
+            "tipo_pago": envio.tipo_pago,
+            "mensajero": envio.mensajero.nombre if envio.mensajero else None,
+            "fecha_creado": envio.creado_en.strftime("%Y-%m-%d %H:%M:%S"),
+        })
+
+    return JsonResponse(data, safe=False)

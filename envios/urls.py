@@ -25,4 +25,8 @@ urlpatterns = [
     path('envios/<int:envio_id>/incidentes/<int:incidente_id>/', views.ver_incidente, name='ver_incidente'),
     path('envios/<int:envio_id>/incidentes/<int:incidente_id>/editar/', views.editar_incidente, name='editar_incidente'),
     path('envios/<int:envio_id>/incidentes/<int:incidente_id>/eliminar/', views.eliminar_incidente, name='eliminar_incidente'),
+
+    # API JSON endpoints
+    path('entregas-json/', views.entregas_api_json, name='entregas_api_json'),
+    path('envios-pendientes-json/', views.envios_pendientes_json, name='envios_pendientes_json'),
 ]

@@ -8,6 +8,8 @@ from .models import Usuario
 from .forms import UsuarioForm, LoginForm
 from envios.models import Envio, Entrega
 import json
+from django.http import JsonResponse
+from .models import PerfilMensajero   # ← ESTA LÍNEA ES LA CLAVE
 
 
 # ------------------------------------------------------------------------------
@@ -216,3 +218,20 @@ def home_data(request):
         "mensajeros_activos": mensajeros_activos,
         "porcentaje_entregados": round(porcentaje_entregados, 2)
     })
+def mensajeros_json(request):
+    """
+    Devuelve un listado de mensajeros con su ubicación actual.
+    """
+    mensajeros = PerfilMensajero.objects.select_related('usuario').values(
+        'usuario__nombre', 'latitud', 'longitud'
+    )
+
+    data = [
+        {
+            "usuario_nombre": m['usuario__nombre'],
+            "latitud": str(m['latitud']) if m['latitud'] is not None else None,
+            "longitud": str(m['longitud']) if m['longitud'] is not None else None
+        }
+        for m in mensajeros
+    ]
+    return JsonResponse(data, safe=False)

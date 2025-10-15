@@ -23,5 +23,6 @@ urlpatterns = [
     path('mensajeros/', views.mensajeros_view, name='mensajeros'),
     path('api/login/', views.api_login, name='api_login'),  # ✅ NUEVO ENDPOINT
     path('home_data/', views.home_data, name='home_data'),
+    path('mensajeros-json/', views.mensajeros_json, name='mensajeros_json'),
 
 ]
