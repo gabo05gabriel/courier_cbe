@@ -1,0 +1,76 @@
+name: courier_cbe_movil
+description: "Aplicación móvil de Courier Bolivian Express S.R.L. conectada con el backend Django REST Framework."
+publish_to: "none" # No publicar en pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 🔹 Comunicación con el backend Django REST Framework
+  http: ^1.5.0
+
+  # 🔹 Almacenamiento local y seguro
+  shared_preferences: ^2.3.2
+  flutter_secure_storage: ^9.2.4
+
+  # 🔹 Manejo de estado global (AuthProvider, etc.)
+  provider: ^6.1.5
+
+  # 🔹 Geolocalización y mapas (para mensajeros)
+  google_maps_flutter: ^2.6.0       # Mapas nativos de Google
+  geolocator: ^13.0.1               # GPS y permisos de ubicación
+  geocoding: ^3.0.0                 # Conversión dirección ↔ coordenadas
+  permission_handler: ^11.3.1       # Manejo avanzado de permisos Android/iOS
+
+  # 🔹 Captura de imágenes (para firma o incidencias)
+  image_picker: ^1.0.7
+
+  # 🔹 Mapas alternativos (Leaflet con OpenStreetMap)
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.0
+
+  # 🔹 UI, tipografía y animaciones
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.3.2
+  flutter_spinkit: ^5.2.2
+  animations: ^2.0.11
+
+  # 🔹 Utilidades adicionales (opcional)
+  intl: ^0.19.0              # Manejo de fechas/números internacionales
+  connectivity_plus: ^6.1.0  # Detección del estado de conexión
+  url_launcher: ^6.3.1       # Abrir URLs o apps externas
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # 🔹 Linter y generador de modelos JSON
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.10
+  json_serializable: ^6.9.0
+
+flutter:
+  uses-material-design: true
+
+  # 🔹 Activos de la app (imágenes, íconos, etc.)
+  assets:
+    - assets/images/
+    - assets/icons/
+
+  # 🔹 Fuentes (usa Google Fonts por defecto)
+  # Si deseas usarlas offline, descomenta esta sección y coloca tus .ttf en assets/fonts/
+  # fonts:
+  #   - family: Poppins
+  #     fonts:
+  #       - asset: assets/fonts/Poppins-Regular.ttf
+  #       - asset: assets/fonts/Poppins-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Poppins-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Poppins-Bold.ttf
+  #         weight: 700

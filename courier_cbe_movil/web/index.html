@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <!--
+      Si sirves tu aplicación Flutter Web en una subcarpeta,
+      asegúrate de ajustar el valor del "base href".
+      Ejemplo: <base href="/courier_cbe_movil/">
+    -->
+    <base href="$FLUTTER_BASE_HREF">
+
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="description" content="Aplicación Courier Bolivian Express conectada a Django REST Framework.">
+
+    <!-- 📱 Configuración iOS y PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Courier CBE Móvil">
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+    <!-- 🔸 Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png"/>
+
+    <!-- 📜 Manifesto PWA -->
+    <link rel="manifest" href="manifest.json">
+
+    <title>Courier CBE Móvil</title>
+
+    <!-- ✅ Google Maps JavaScript API -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U">
+    </script>
+
+    <!-- ✅ Estilo opcional (fondo de carga) -->
+    <style>
+      body {
+        background-color: #D47B2C;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      #flutter_container {
+        position: absolute;
+        inset: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Contenedor del Flutter Web App -->
+    <div id="flutter_container"></div>
+
+    <!-- 🚀 Script principal de Flutter -->
+    <script src="flutter_bootstrap.js" async></script>
+  </body>
+</html>
