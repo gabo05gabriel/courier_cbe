@@ -1,0 +1,51 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Usuarios</title>
+
+    <!-- Enlazar los archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+</head>
+<body>
+    <!-- Incluir el navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <div class="page-container">
+        <h1>Lista de Usuarios</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
+                    <th>Rol</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for usuario in usuarios %}
+                    <tr>
+                        <td>{{ usuario.nombre }}</td>
+                        <td>{{ usuario.email }}</td>
+                        <td>{{ usuario.telefono }}</td>
+                        <td>{{ usuario.rol.nombre }}</td>
+                        <td>
+                            <a href="{% url 'usuarios:ver_usuario' usuario.id %}">Ver</a> |
+                            <a href="{% url 'usuarios:editar_usuario' usuario.id %}">Editar</a> |
+                            <a href="{% url 'usuarios:eliminar_usuario' usuario.id %}">Eliminar</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{% url 'usuarios:crear_usuario' %}">Crear un nuevo Usuario</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,146 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrar Entrega</title>
+
+    <!-- Estilos -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            background: #fff;
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #444;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #28a745;
+            color: #fff;
+            font-weight: bold;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        .incidente-section {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #fef6e4;
+            border: 1px solid #f1d18a;
+        }
+
+        .incidente-section h2 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .volver {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .volver:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Registrar Entrega para {{ envio.destinatario_nombre }}</h1>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <!-- Ocultar campo de mensajero -->
+            {% for field in form %}
+                {% if field.name != "mensajero" %}
+                    <div>
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <small>{{ field.help_text }}</small>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <p style="color:red;">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <div class="incidente-section">
+                <h2>📦 Registrar Incidencia (opcional)</h2>
+
+                <label for="tipo_incidente">Tipo de incidente:</label>
+                <select id="tipo_incidente" name="tipo_incidente">
+                    <option value="">Sin incidente</option>
+                    <option value="Retraso">Retraso</option>
+                    <option value="Daño">Daño</option>
+                    <option value="Pérdida">Pérdida</option>
+                    <option value="Otro">Otro</option>
+                </select>
+
+                <label for="descripcion_incidente">Descripción:</label>
+                <textarea id="descripcion_incidente" name="descripcion_incidente" rows="3" placeholder="Describe brevemente el incidente..."></textarea>
+            </div>
+
+            <button type="submit">💾 Guardar Entrega</button>
+        </form>
+
+        <a href="{% url 'ver_envio' envio.id %}" class="volver">⬅ Volver al envío</a>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Entrega</title>
+    <!-- Enlazar los archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+</head>
+<body>
+
+    <!-- Incluir el navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Editar Entrega #{{ entrega.id }}</h1>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Mostrar los campos del formulario -->
+            {{ form.as_p }}
+
+            <!-- Campo para seleccionar nueva firma (opcional) -->
+            <div class="form-group">
+                <label for="firma">Nueva Firma (Dejar en blanco si no se desea cambiar)</label>
+                <input type="file" name="firma" id="firma" class="form-control">
+            </div>
+
+            <!-- Botón para actualizar -->
+            <button type="submit" class="btn submit-btn">Actualizar</button>
+        </form>
+
+        <br>
+        <a href="{% url 'ver_entrega' entrega.id %}" class="btn cancel-btn">Cancelar</a>
+
+        <!-- Mostrar la firma si existe -->
+        <div class="firma">
+            <h2>Firma de entrega</h2>
+            {% if entrega.firma %}
+                <img src="{{ entrega.firma.url }}" alt="Firma de entrega" class="firma-img" style="max-width: 300px; height: auto;">
+            {% else %}
+                <p>No se proporcionó firma.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>

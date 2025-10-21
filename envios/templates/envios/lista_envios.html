@@ -1,0 +1,67 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Envíos</title>
+    <!-- Enlazar los archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+</head>
+<body>
+    <!-- Incluir el navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <h1>Lista de Sobres</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Destinatario</th>
+                <th>Dirección de Origen</th>
+                <th>Dirección de Destino</th>
+                <th>Peso</th>
+                <th>Tipo de Servicio</th>
+                <th>Tipo</th> <!-- 👈 Nueva columna -->
+                <th>Estado</th>
+                <th>Monto de Pago</th>
+                <th>Tipo de Pago</th>
+                <th>Mensajero</th>
+                <th>Fecha de Creación</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for envio in envios %}
+                <tr>
+                    <td>{{ envio.destinatario_nombre }}</td>
+                    <td>{{ envio.origen_direccion }}</td>
+                    <td>{{ envio.destino_direccion }}</td>
+                    <td>{{ envio.peso }}</td>
+                    <td>{{ envio.tipo_servicio }}</td>
+                    <td>{{ envio.tipo }}</td> <!-- 👈 Muestra el tipo -->
+                    <td>{{ envio.estado }}</td>
+                    <td>{{ envio.monto_pago }}</td>
+                    <td>{{ envio.tipo_pago }}</td>
+                    <td>
+                        {% if envio.mensajero %}
+                            {{ envio.mensajero.nombre }}
+                        {% else %}
+                            No asignado
+                        {% endif %}
+                    </td>
+                    <td>{{ envio.creado_en }}</td>
+                    <td>
+                        <a href="{% url 'ver_envio' envio.id %}">Ver</a> |
+                        <a href="{% url 'editar_envio' envio.id %}">Editar</a> |
+                        <a href="{% url 'eliminar_envio' envio.id %}">Eliminar</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'crear_envio' %}">Crear un nuevo Sobre</a>
+</body>
+</html>

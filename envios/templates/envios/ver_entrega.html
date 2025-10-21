@@ -1,0 +1,208 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Entrega</title>
+
+    <!-- CSS base -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+
+    <style>
+        /* Ocultar navbar solo en impresión */
+        @media print {
+            .navbar, nav, header {
+                display: none !important;
+            }
+            body {
+                background: white;
+                color: black;
+            }
+            .container {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                padding: 0;
+            }
+            .actions {
+                display: none !important;
+            }
+        }
+
+       
+
+        .container {
+            max-width: 800px;
+            margin: 100px auto 40px;
+            background: #fff;
+            border-radius: 12px;
+            padding: 30px 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 1.9rem;
+            color: #1e293b;
+            margin-bottom: 25px;
+        }
+
+        .details p {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        .details strong {
+            color: #111827;
+        }
+
+        .estado {
+            font-weight: bold;
+            padding: 3px 10px;
+            border-radius: 8px;
+        }
+
+        .estado.entregado {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .estado.rechazado {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .estado.otro {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .firma {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .firma h2 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .firma-img {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 8px;
+            background: #fafafa;
+            max-width: 300px;
+            width: 100%;
+        }
+
+        .actions {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #0088ff;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #006edc;
+        }
+
+        .incident-section {
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .incident {
+            background-color: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 12px 18px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+        }
+
+        .incident strong {
+            color: #7c2d12;
+        }
+
+        .empty {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar normal (oculta al imprimir) -->
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>📦 Detalles de la Entrega</h1>
+
+        <div class="details">
+            <p><strong>ID de Envío:</strong> {{ entrega.envio.id }} — {{ entrega.envio.destinatario_nombre }}</p>
+            <p><strong>Tipo de Envío:</strong> {{ entrega.envio.tipo }}</p>
+            <p><strong>Remitente:</strong> {{ entrega.envio.remitente_nombre }} ({{ entrega.envio.origen_direccion }})</p>
+            <p><strong>Destino:</strong> {{ entrega.envio.destino_direccion }}</p>
+            <p><strong>Mensajero:</strong> {{ entrega.mensajero.nombre }} {{ entrega.mensajero.apellido }}</p>
+            <p><strong>Fecha de Entrega:</strong> {{ entrega.fecha_entrega|date:"d/m/Y H:i" }}</p>
+            <p>
+                <strong>Estado:</strong>
+                {% if entrega.estado == "Entregado" %}
+                    <span class="estado entregado">{{ entrega.estado }}</span>
+                {% elif entrega.estado == "Rechazado" %}
+                    <span class="estado rechazado">{{ entrega.estado }}</span>
+                {% else %}
+                    <span class="estado otro">{{ entrega.estado }}</span>
+                {% endif %}
+            </p>
+            <p><strong>Pagado:</strong> {% if entrega.pagado %}✅ Sí{% else %}❌ No{% endif %}</p>
+        </div>
+
+        <div class="firma">
+            <h2>✍️ Firma de entrega</h2>
+            {% if entrega.firma %}
+                <img src="{{ entrega.firma.url }}" alt="Firma de entrega" class="firma-img">
+            {% else %}
+                <p class="empty">No se proporcionó firma.</p>
+            {% endif %}
+        </div>
+
+        <!-- Sección de incidentes -->
+        <div class="incident-section">
+            <h2>🚨 Incidentes asociados</h2>
+            {% if entrega.envio.incidente_set.all %}
+                {% for inc in entrega.envio.incidente_set.all %}
+                    <div class="incident">
+                        <p><strong>Tipo:</strong> {{ inc.tipo }}</p>
+                        <p><strong>Descripción:</strong> {{ inc.descripcion }}</p>
+                        <p><strong>Estado:</strong> {{ inc.estado }}</p>
+                    </div>
+                {% empty %}
+                    <p class="empty">No hay incidentes registrados para este envío.</p>
+                {% endfor %}
+            {% else %}
+                <p class="empty">No hay incidentes registrados.</p>
+            {% endif %}
+        </div>
+
+        <div class="actions">
+            <a href="{% url 'lista_entregas' %}" class="btn">← Volver a la lista de entregas</a>
+            <button onclick="window.print()" class="btn" style="background-color: #10b981;">🖨️ Imprimir</button>
+        </div>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Usuario</title>
+    
+    <!-- Cargar archivos estáticos de Django -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+</head>
+<body>
+    <h1>Editar Usuario</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }} <!-- Renderiza el formulario con sus campos -->
+        <button type="submit">Actualizar Usuario</button>
+    </form>
+    <a href="{% url 'usuarios:lista_usuarios' %}">Volver a la lista de usuarios</a> <!-- Usa el espacio de nombres 'usuarios' -->
+</body>
+</html>

@@ -1,0 +1,7 @@
+Django==5.2.6
+Pillow==11.3.0
+googlemaps==4.10.0
+psycopg2-binary==2.9.10
+python-dotenv==1.1.1
+pandas==2.2.3
+scikit-learn==1.5.2

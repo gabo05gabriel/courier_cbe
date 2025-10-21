@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajeros en Tiempo Real</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .mensajeros-lista {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .mensajeros-lista h2 {
+            margin-bottom: 15px;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .mensajeros-lista ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .mensajeros-lista li {
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .mensajeros-lista li span {
+            font-weight: bold;
+            color: #007BFF;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Ubicación de Mensajeros</h1>
+
+        <!-- Mapa -->
+        <div id="map"></div>
+
+        <!-- Lista de Mensajeros -->
+        <div class="mensajeros-lista">
+            <h2>Lista de Mensajeros</h2>
+            <ul id="mensajeros-lista"></ul>
+        </div>
+    </div>
+
+    <!-- Script del mapa -->
+    <script>
+        function initMap() {
+            const center = { lat: -16.5, lng: -68.15 };
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: center
+            });
+
+            // Mensajeros desde Django
+            const mensajeros = JSON.parse('{{ mensajeros_json|escapejs }}');
+
+            const bounds = new google.maps.LatLngBounds();
+            const listaElement = document.getElementById("mensajeros-lista");
+
+            mensajeros.forEach(m => {
+    const position = { lat: m.lat, lng: m.lng };
+
+    // Agregar marcador con tamaño fijo
+    new google.maps.Marker({
+        map,
+        position,
+        title: m.nombre,
+        icon: {
+            url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png", // marcador rojo clásico
+            scaledSize: new google.maps.Size(32, 32), // 🔹 tamaño fijo en píxeles
+            labelOrigin: new google.maps.Point(16, -10) // posición del texto arriba del pin
+        },
+        label: {
+            text: m.nombre,     // nombre visible
+            fontSize: "13px",
+            fontWeight: "bold",
+            color: "#000000"
+        }
+    });
+
+    bounds.extend(position);
+
+    // Agregar a la lista debajo del mapa
+    const li = document.createElement("li");
+    li.innerHTML = `<span>${m.nombre}</span> - Lat: ${m.lat.toFixed(5)}, Lng: ${m.lng.toFixed(5)}`;
+    listaElement.appendChild(li);
+});
+
+if (mensajeros.length > 0) {
+    map.fitBounds(bounds);
+}
+
+        }
+    </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+</body>
+</html>

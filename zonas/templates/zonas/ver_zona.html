@@ -1,0 +1,102 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detalles de la Zona</title>
+
+    <!-- Archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        h3 {
+            margin-top: 25px;
+            color: #444;
+        }
+
+        p {
+            font-size: 16px;
+            margin: 8px 0;
+            color: #555;
+        }
+
+        a.volver {
+            display: inline-block;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        a.volver:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Detalles de la Zona</h1>
+        <p><strong>Nombre:</strong> {{ zona.nombre }}</p>
+        <p><strong>Área (coordenadas):</strong> {{ zona.area }}</p>
+
+        <h3>Ubicación de la Zona en el Mapa</h3>
+        <div id="map"></div>
+
+        <a href="{% url 'lista_zonas' %}" class="volver">⬅ Volver a Zonas Registradas</a>
+    </div>
+
+    <script>
+        function initMap() {
+            const coords = JSON.parse('{{ zona.area|escapejs }}');
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 14,
+                center: { lat: coords[0][0], lng: coords[0][1] }
+            });
+
+            new google.maps.Polygon({
+                paths: coords.map(c => ({ lat: c[0], lng: c[1] })),
+                map: map,
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: "#FF0000",
+                fillOpacity: 0.35
+            });
+        }
+    </script>
+
+    <!-- Mantengo tu token de Google Maps tal cual -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap&libraries=drawing" async defer></script>
+</body>
+</html>

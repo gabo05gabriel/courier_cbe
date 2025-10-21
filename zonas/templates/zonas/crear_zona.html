@@ -1,0 +1,155 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Nueva Zona</title>
+
+    <!-- Archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .form-container {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 25px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .form-container h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .btn-guardar {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: #28a745;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-guardar:hover {
+            background: #218838;
+        }
+
+        a.volver {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+
+        a.volver:hover {
+            color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="form-container">
+        <h1>Crear Nueva Zona</h1>
+        <form method="post">
+            {% csrf_token %}
+            
+            <label>Nombre:</label>
+            <input type="text" name="nombre" required>
+
+            <!-- Campo oculto para guardar coordenadas -->
+            <input type="hidden" name="area" id="id_area">
+
+            <h3>Seleccionar área en el mapa</h3>
+            <div id="map"></div>
+
+            <button type="submit" class="btn-guardar">Guardar</button>
+        </form>
+        <a href="{% url 'lista_zonas' %}" class="volver">⬅ Volver a la lista de zonas</a>
+    </div>
+
+    <script>
+        let map, drawingManager, selectedShape;
+
+        function initMap() {
+            const laPaz = { lat: -16.5, lng: -68.15 };
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: laPaz
+            });
+
+            drawingManager = new google.maps.drawing.DrawingManager({
+                drawingMode: google.maps.drawing.OverlayType.POLYGON,
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: ["polygon"]
+                },
+                polygonOptions: {
+                    editable: true,
+                    draggable: true
+                }
+            });
+
+            drawingManager.setMap(map);
+
+            google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
+                if (selectedShape) {
+                    selectedShape.setMap(null);
+                }
+                selectedShape = event.overlay;
+                savePolygonCoords(selectedShape);
+
+                // Escuchar cambios en el polígono
+                google.maps.event.addListener(selectedShape.getPath(), "set_at", () => savePolygonCoords(selectedShape));
+                google.maps.event.addListener(selectedShape.getPath(), "insert_at", () => savePolygonCoords(selectedShape));
+                google.maps.event.addListener(selectedShape.getPath(), "remove_at", () => savePolygonCoords(selectedShape));
+            });
+        }
+
+        function savePolygonCoords(polygon) {
+            const coords = polygon.getPath().getArray().map(coord => [coord.lat(), coord.lng()]);
+            document.getElementById("id_area").value = JSON.stringify(coords);
+        }
+    </script>
+
+    <!-- Mantengo tu token de Google Maps tal cual -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap&libraries=drawing" async defer></script>
+</body>
+</html>

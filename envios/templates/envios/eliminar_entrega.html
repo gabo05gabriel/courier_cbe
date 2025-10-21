@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eliminar Entrega</title>
+
+    <!-- Archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-direction: column; /* Botones en columna */
+            align-items: center;
+            gap: 12px; /* Espacio vertical entre botones */
+        }
+
+        .btn-eliminar {
+            background: #dc3545;
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            width: 200px; /* mismo ancho para ambos */
+        }
+
+        .btn-eliminar:hover {
+            background: #b52d3a;
+        }
+
+        .btn-cancelar {
+            display: inline-block;
+            padding: 10px 18px;
+            background: #6c757d;
+            color: white;
+            border-radius: 6px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: background 0.3s ease;
+            width: 200px; /* mismo ancho para ambos */
+            text-align: center;
+        }
+
+        .btn-cancelar:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1>Eliminar Entrega</h1>
+        <p>¿Estás seguro de eliminar la entrega de <b>{{ entrega.envio.destinatario_nombre }}</b>?</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-actions">
+                <button type="submit" class="btn-eliminar">❌ Sí, eliminar</button>
+                <a href="{% url 'ver_entrega' entrega.id %}" class="btn-cancelar">⬅ Cancelar</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

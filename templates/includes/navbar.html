@@ -1,0 +1,15 @@
+<body>
+    <!-- Barra de navegación -->
+    <nav>
+        <ul>
+            <li><a href="{% url 'usuarios:home' %}">Dashboard</a></li>
+            <li><a href="{% url 'usuarios:lista_usuarios' %}">Usuarios</a></li>
+            <li><a href="{% url 'usuarios:mensajeros' %}">Mensajeros</a></li> <!-- Nuevo botón -->
+            <li><a href="{% url 'lista_envios' %}">Sobres</a></li>
+            <li><a href="{% url 'lista_entregas' %}">Entregados</a></li>
+            <li><a href="{% url 'lista_rutas' %}">Rutas</a></li>
+            <li><a href="{% url 'lista_zonas' %}">Zonas</a></li>
+            <li><a href="{% url 'cerrar_sesion' %}">Cerrar Sesión</a></li>
+        </ul>
+    </nav>
+</body>

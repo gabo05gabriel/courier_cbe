@@ -1,0 +1,132 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Sobre</title>
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .details {
+            background: #fff;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .details p {
+            margin: 8px 0;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .btn-crear {
+            display: inline-block;
+            padding: 10px 18px;
+            background: #007BFF;
+            color: #fff;
+            font-weight: bold;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.3s ease;
+        }
+
+        .btn-crear:hover {
+            background: #0056b3;
+        }
+
+        a.volver {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        a.volver:hover {
+            color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    <h1>Editar Sobre</h1>
+    <form method="POST">
+        {% csrf_token %}
+        <div class="details">
+            {{ form.as_p }}  <!-- Renderiza los campos del formulario -->
+
+            <!-- Campos ocultos para latitud y longitud -->
+            <input type="hidden" name="latitud_origen" id="id_latitud_origen" value="{{ envio.latitud_origen }}">
+            <input type="hidden" name="longitud_origen" id="id_longitud_origen" value="{{ envio.longitud_origen }}">
+            <input type="hidden" name="latitud_destino" id="id_latitud_destino" value="{{ envio.latitud_destino }}">
+            <input type="hidden" name="longitud_destino" id="id_longitud_destino" value="{{ envio.longitud_destino }}">
+        </div>
+
+        <button type="submit" class="btn-crear">Actualizar Envío</button>
+    </form>
+
+    <div class="container">
+        <h2>Ubicación de Origen y Destino</h2>
+        <div id="map"></div>
+        <br>
+
+        <a href="{% url 'lista_envios' %}" class="volver">⬅ Volver a la lista de sobres</a>
+    </div>
+
+    <!-- Script del mapa -->
+    <script>
+        function initMap() {
+            // Configuración de las coordenadas iniciales para el mapa
+            const origen = {
+                lat: parseFloat("{{ envio.latitud_origen|default:-16.5 }}"),
+                lng: parseFloat("{{ envio.longitud_origen|default:-68.1193 }}")
+            };
+            const destino = {
+                lat: parseFloat("{{ envio.latitud_destino|default:-16.52 }}"),
+                lng: parseFloat("{{ envio.longitud_destino|default:-68.12 }}")
+            };
+
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: origen
+            });
+
+            // Marcadores para origen y destino
+            const markerOrigen = new google.maps.Marker({ map, position: origen, label: "O", draggable: true });
+            const markerDestino = new google.maps.Marker({ map, position: destino, label: "D", draggable: true });
+
+            // Función para actualizar las coordenadas cuando el marcador se mueve
+            google.maps.event.addListener(markerOrigen, 'dragend', function(event) {
+                document.getElementById("id_latitud_origen").value = event.latLng.lat();
+                document.getElementById("id_longitud_origen").value = event.latLng.lng();
+            });
+
+            google.maps.event.addListener(markerDestino, 'dragend', function(event) {
+                document.getElementById("id_latitud_destino").value = event.latLng.lat();
+                document.getElementById("id_longitud_destino").value = event.latLng.lng();
+            });
+
+            // Ajuste de la vista para incluir ambos marcadores
+            const bounds = new google.maps.LatLngBounds();
+            bounds.extend(origen);
+            bounds.extend(destino);
+            map.fitBounds(bounds);
+        }
+    </script>
+
+    <!-- Token de tu API de Google Maps -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap" async defer></script>
+</body>
+</html>

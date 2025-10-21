@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Zona</title>
+
+    <!-- CSS base -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/components/_forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-top: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .form-container {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 25px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+            font-weight: bold;
+            color: #444;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        .btn-editar {
+            margin-top: 20px;
+            width: 100%;
+            padding: 12px;
+            background: #007BFF;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-editar:hover {
+            background: #0056b3;
+        }
+
+        .btn-volver {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .btn-volver:hover {
+            color: #1e7e34;
+        }
+    </style>
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="form-container">
+        <h1>Editar Zona: {{ zona.nombre }}</h1>
+
+        <form method="POST">
+            {% csrf_token %}
+
+            <label>Nombre:</label>
+            <input type="text" name="nombre" value="{{ zona.nombre }}" required>
+
+            <!-- Campo oculto para guardar las coordenadas actualizadas -->
+            <input type="hidden" id="id_area" name="area" value="{{ zona.area }}">
+
+            <h3>Editar área en el mapa</h3>
+            <div id="map"></div>
+
+            <button type="submit" class="btn-editar">💾 Guardar Cambios</button>
+        </form>
+
+        <a href="{% url 'lista_zonas' %}" class="btn-volver">⬅️ Volver a la lista</a>
+    </div>
+
+    <script>
+        let map, polygon;
+
+        function initMap() {
+            const laPaz = { lat: -16.5, lng: -68.15 };
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 13,
+                center: laPaz,
+            });
+
+            // Cargar coordenadas actuales del polígono desde el campo oculto
+            const areaData = document.getElementById("id_area").value;
+            let coords = [];
+
+            try {
+                coords = JSON.parse(areaData).map(coord => ({ lat: coord[0], lng: coord[1] }));
+            } catch (e) {
+                console.error("Error al leer coordenadas del polígono:", e);
+            }
+
+            if (coords.length > 0) {
+                polygon = new google.maps.Polygon({
+                    paths: coords,
+                    editable: true,
+                    draggable: true,
+                    map: map,
+                });
+
+                // Centrar mapa al polígono
+                const bounds = new google.maps.LatLngBounds();
+                coords.forEach(c => bounds.extend(c));
+                map.fitBounds(bounds);
+
+                // Escuchar modificaciones al polígono
+                google.maps.event.addListener(polygon.getPath(), "set_at", () => savePolygonCoords());
+                google.maps.event.addListener(polygon.getPath(), "insert_at", () => savePolygonCoords());
+                google.maps.event.addListener(polygon.getPath(), "remove_at", () => savePolygonCoords());
+            } else {
+                console.warn("Zona sin coordenadas. Dibuja un polígono nuevo.");
+            }
+
+            // Permitir dibujar un nuevo polígono si se desea reemplazar
+            const drawingManager = new google.maps.drawing.DrawingManager({
+                drawingControl: true,
+                drawingControlOptions: {
+                    position: google.maps.ControlPosition.TOP_CENTER,
+                    drawingModes: ["polygon"],
+                },
+                polygonOptions: {
+                    editable: true,
+                    draggable: true,
+                },
+            });
+
+            drawingManager.setMap(map);
+
+            google.maps.event.addListener(drawingManager, "overlaycomplete", function(event) {
+                if (polygon) polygon.setMap(null);
+                polygon = event.overlay;
+                savePolygonCoords();
+
+                google.maps.event.addListener(polygon.getPath(), "set_at", () => savePolygonCoords());
+                google.maps.event.addListener(polygon.getPath(), "insert_at", () => savePolygonCoords());
+                google.maps.event.addListener(polygon.getPath(), "remove_at", () => savePolygonCoords());
+            });
+        }
+
+        function savePolygonCoords() {
+            const coords = polygon.getPath().getArray().map(coord => [coord.lat(), coord.lng()]);
+            document.getElementById("id_area").value = JSON.stringify(coords);
+        }
+    </script>
+
+    <!-- Google Maps API -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBN30lGA4NxW7R3OcIfK1DqxJmavBMAw1U&callback=initMap&libraries=drawing" async defer></script>
+</body>
+</html>

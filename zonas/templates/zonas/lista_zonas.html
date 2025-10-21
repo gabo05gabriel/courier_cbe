@@ -1,0 +1,52 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Zonas</title>
+    <!-- Enlazar los archivos CSS -->
+    <link rel="stylesheet" href="{% static 'css/base/_reset.css' %}">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/_listas.css' %}">
+</head>
+<body>
+    {% include 'includes/navbar.html' %}
+
+    <div class="container">
+        <h1 class="titulo">Lista de Zonas</h1>
+
+        {% if zonas %}
+            <table class="tabla-lista">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for zona in zonas %}
+                        <tr>
+                            <td>{{ zona.id }}</td>
+                            <td>{{ zona.nombre }}</td>
+                            <td>
+                                <a href="{% url 'ver_zona' zona.id %}" class="btn-ver">Ver</a>
+                                <a href="{% url 'editar_zona' zona.id %}" class="btn-editar">Editar</a>
+                                <a href="{% url 'eliminar_zona' zona.id %}" class="btn-eliminar">Eliminar</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="mensaje-vacio">No hay zonas registradas.</p>
+        {% endif %}
+
+        <div class="acciones">
+            <a href="{% url 'crear_zona' %}" class="btn-crear">➕ Crear Nueva Zona</a>
+        </div>
+    </div>
+</body>
+</html>
